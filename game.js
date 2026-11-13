@@ -100,7 +100,7 @@
   let reset=false;
   if(Math.abs(v)>halfWidth-.45){v=Math.sign(v)*(halfWidth-.45);vv=-vv*.68;reset=true;}
   if(Math.abs(u)>halfLength-.55){
-   if(Math.abs(v)<goalHalf && Math.abs(u)<halfLength+2.5){goalEvent(u>0?0:1);return;}
+   if(Math.abs(v)<goalHalf && Math.abs(u)<halfLength+2.5 && matchStartedAt && t<matchEndAt){goalEvent(u>0?0:1);return;}
    u=Math.sign(u)*(halfLength-.55);vu=-vu*.62;reset=true;
   }
   const pos=fromField(u,v),velocity=[longAxis[0]*vu+shortAxis[0]*vv,longAxis[1]*vu+shortAxis[1]*vv];
@@ -290,7 +290,7 @@
   }
   ballTick();
   const team=localTeam();if(matchQueue&&team!==lastAssignedTeam){lastAssignedTeam=team;placeOnTeam();}
-  if(matchQueue&&!matchEnded&&isMatchHost()&&t-lastMatchSync>650){lastMatchSync=t;if(!matchStartedAt)net.emit('matchState',{kind:'queue',queueStartedAt:matchQueueStartedAt});else net.emit('matchState',{kind:'start',queueStartedAt:matchQueueStartedAt,startedAt:matchStartedAt,endsAt:matchEndAt,scoreA:matchScoreA,scoreB:matchScoreB});}net.setExtra({f:fight?1:0,hp:Math.round(hp),w:weapon?1:0,weapon:weapon||'',moving:api.moving(),firing:!!firing,queue:!!matchQueue,queueAt:matchQueue?matchJoinAt:0,team});
+  if(matchQueue&&!matchEnded&&isMatchHost()&&t-lastMatchSync>650){lastMatchSync=t;if(!matchStartedAt)net.emit('matchState',{kind:'queue',queueStartedAt:matchQueueStartedAt});else net.emit('matchState',{kind:'start',queueStartedAt:matchQueueStartedAt,startedAt:matchStartedAt,endsAt:matchEndAt,scoreA:matchScoreA,scoreB:matchScoreB});}net.setExtra({f:fight?1:0,hp:Math.round(hp),w:(fight&&weapon)?1:0,weapon:(fight&&weapon)?weapon:'',fighting:!!(fight&&alive&&weapon),moving:api.moving(),firing:!!(fight&&firing),queue:!!matchQueue,queueAt:matchQueue?matchJoinAt:0,team});
   const walkingNow=api.mode()==='walk';const playerCounter=$('playerCounter'),playerCounterText=$('playerCounterText');if(playerCounter){playerCounter.hidden=!walkingNow||!!(fight||matchQueue||ballOn);if(playerCounterText)playerCounterText.textContent=(net.live()||(net.onlinePlayers&&net.onlinePlayers().length))?net.count()+' người trong phòng'+(!net.live()?' · đang đồng bộ':''):'Chưa vào phòng chung';}const arena=$('arenaPanel');if(arena)arena.hidden=!(walkingNow&&(fight||matchQueue||ballOn));const count=$('arenaCount');if(count)count.textContent=(net.count())+' online · '+matchPlayerCount()+'/10 trong trận'+(botNeeded()?' (có BOT)':'');
   const scorePanel=$('matchScore')?.parentElement;if(scorePanel)scorePanel.hidden=!(matchQueue||ballOn);
   const matchMeta=$('matchMeta'),matchClock=$('matchClock'),matchScore=$('matchScore');if(matchMeta)matchMeta.textContent=matchQueue?('ĐỘI '+(team===0?'XANH':'ĐỎ')+' · '+(botNeeded()?'BOT BÙ ĐỘI':'ĐỘI CÂN BẰNG')+(matchStartedAt?' · THI ĐẤU':' · ĐANG GHÉP')):(fight?'ĐẤU SÚNG REALTIME':'SÂN BÓNG UTE');
@@ -309,5 +309,5 @@
   const k=e.key.toLowerCase();if(k==='e')pick();else if(k==='r')reload();else if(k==='g')$('fightBtn').click();
  });
  setInterval(tick,33);
- window.campusGame={WEAPONS,spawns,inside,court,goalA,goalB,halfLength,halfWidth,state:()=>({fight,hp,weapon,ammo,reserve,kills,ball,matchQueue,matchQueueStartedAt,matchStartedAt,matchEnded,matchScoreA,matchScoreB,matchEndAt,team:localTeam()}),isFighting:()=>fight&&alive&&!!weapon,setFiring:v=>{firing=!!v},botPlayer:()=>{return botNeeded()?{id:'ute-campus-bot',name:'BOT UTE',color:'#d94d42',x:bot.x,z:bot.z,yaw:bot.yaw,weapon:'',moving:true,firing:false,hp:100,fighting:false,queue:true,queueAt:matchJoinAt,team:1,bot:true}:null;},renderState:()=>({taken:spawns.map((_,i)=>!!isTaken(i)),ball:{visible:ballOn,...(()=>{const b=displayBallPos(now());return{x:b[0],z:b[1],speed:Math.hypot(ball.vx,ball.vz)}})()}}),_test:{onShot,fire,pick,setFight:v=>{fight=v},setNear:i=>{nearItem=i},field:toField,queuedPlayers,botNeeded,localTeam,displayBallPos}};
+ window.campusGame={WEAPONS,spawns,inside,court,goalA,goalB,halfLength,halfWidth,state:()=>({fight,hp,weapon:fight?weapon:null,ammo,reserve,kills,ball,matchQueue,matchQueueStartedAt,matchStartedAt,matchEnded,matchScoreA,matchScoreB,matchEndAt,team:localTeam()}),isFighting:()=>fight&&alive&&!!weapon,setFiring:v=>{firing=!!v},botPlayer:()=>{return botNeeded()?{id:'ute-campus-bot',name:'BOT UTE',color:'#d94d42',x:bot.x,z:bot.z,yaw:bot.yaw,weapon:'',moving:true,firing:false,hp:100,fighting:false,queue:true,queueAt:matchJoinAt,team:1,bot:true}:null;},renderState:()=>({taken:spawns.map((_,i)=>!!isTaken(i)),ball:{visible:ballOn,...(()=>{const b=displayBallPos(now());return{x:b[0],z:b[1],speed:Math.hypot(ball.vx,ball.vz)}})()}}),_test:{onShot,fire,pick,setFight:v=>{fight=v},setNear:i=>{nearItem=i},field:toField,queuedPlayers,botNeeded,localTeam,displayBallPos}};
 })();

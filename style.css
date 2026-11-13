@@ -141,3 +141,9 @@ body.walking #hpBox{backdrop-filter:blur(14px)}
 #playerCounter{position:absolute;right:26px;top:22px;padding:9px 13px;border:1px solid #ffffff40;border-radius:18px;background:linear-gradient(135deg,#10352fe8,#1b6250e8);color:#bff5d8;font-size:11px;font-weight:700;letter-spacing:.15px;box-shadow:0 8px 22px #071b2350;backdrop-filter:blur(12px);pointer-events:none}
 #playerCounter[hidden]{display:none!important}
 @media(max-width:700px){#playerCounter{right:74px;top:12px;padding:7px 9px;font-size:9px;max-width:125px;text-align:center}}
+
+/* Reticle is deliberately high-contrast and visible only in armed combat mode. */
+#crosshair{z-index:30;width:30px;height:30px;filter:drop-shadow(0 0 3px #071b17) drop-shadow(0 0 1px #fff)}
+#crosshair i{background:#f7fff5;box-shadow:0 0 2px #10251e,0 0 5px rgba(0,0,0,.85)}
+#crosshair b{background:#ff4b3e;border:1.5px solid #fff;box-shadow:0 0 4px #071b17}
+#crosshair[hidden]{display:none!important}

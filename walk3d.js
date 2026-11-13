@@ -431,16 +431,19 @@
     const isFirst = !!state.firstPerson;
     const moving = !!state.moving;
     const running = !!state.running;
-    const weapon = state.weapon || '';
+    const weapon = state.fight ? (state.weapon || '') : '';
+    // When combat is switched off, forcibly clear both weapon meshes and muzzle effects.
+    if (!state.fight && localHeldWeapon) { setHeldGun(local, ''); localHeldWeapon = ''; }
     local.position.set(p.x, moving ? Math.abs(Math.sin(now / 90)) * .025 : 0, p.z); local.rotation.y = yaw;
     local.visible = !isFirst;
     const newColor = api.currentColor ? api.currentColor() : '#267c65';
     if (localColor !== newColor) { localColor = newColor; local.userData.shirtMesh.material.color.set(newColor); }
     local.userData.legs.forEach((leg, i) => { leg.rotation.x = moving ? Math.sin(now / (running ? 85 : 130) + i * Math.PI) * (running ? .64 : .42) : THREE.MathUtils.damp(leg.rotation.x, 0, 10, dt); });
     const stride = moving ? Math.sin(now / (running ? 85 : 130)) : 0;
-    if (local.userData.armsHold) local.userData.armsHold.rotation.x = THREE.MathUtils.damp(local.userData.armsHold.rotation.x, moving ? stride * .035 : 0, 7, dt);
-    if (local.userData.armsIdle) local.userData.armsIdle.rotation.x = THREE.MathUtils.damp(local.userData.armsIdle.rotation.x, moving ? -stride * .08 : 0, 7, dt);
-    local.userData.shirtMesh.position.y = 1.22 + (moving ? Math.abs(stride) * .025 : 0);
+    if (local.userData.armsHold) { local.userData.armsHold.rotation.x = THREE.MathUtils.damp(local.userData.armsHold.rotation.x, moving ? stride * .10 : 0, 8, dt); local.userData.armsHold.rotation.z = THREE.MathUtils.damp(local.userData.armsHold.rotation.z, 0, 8, dt); }
+    if (local.userData.armsIdle) { local.userData.armsIdle.rotation.x = THREE.MathUtils.damp(local.userData.armsIdle.rotation.x, moving ? -stride * .12 : 0, 8, dt); local.userData.armsIdle.rotation.z = THREE.MathUtils.damp(local.userData.armsIdle.rotation.z, moving ? Math.sin(now / (running ? 90 : 140)) * .18 : 0, 7, dt); }
+    local.userData.shirtMesh.position.y = THREE.MathUtils.damp(local.userData.shirtMesh.position.y, 1.22 + (moving ? Math.abs(stride) * .045 : 0), 10, dt);
+    local.rotation.z = THREE.MathUtils.damp(local.rotation.z, moving ? Math.sin(now / (running ? 90 : 140)) * .018 : 0, 7, dt);
     if (localHeldWeapon !== weapon) { setHeldGun(local, weapon); localHeldWeapon = weapon; }
     const kickback = local.userData.recoilUntil > now ? Math.sin((local.userData.recoilUntil - now) / 90 * Math.PI) * .10 : 0;
     local.userData.gunHolder.position.z = -.55 + kickback; local.userData.gunHolder.rotation.x = -kickback * 1.4;
@@ -483,12 +486,13 @@
         const label = makeNameSprite(peer.name, '#ffffff'); label.position.copy(g.userData.label.position);
         g.remove(g.userData.label); g.userData.label.material.map.dispose(); g.userData.label.material.dispose(); g.userData.label = label; g.add(label);
       }
-      if (entry.weapon !== (peer.weapon || '')) { entry.weapon = peer.weapon || ''; setHeldGun(g, entry.weapon); }
+      const peerWeapon = (peer.fighting || peer.f) ? (peer.weapon || '') : '';
+      if (entry.weapon !== peerWeapon) { entry.weapon = peerWeapon; setHeldGun(g, entry.weapon); }
       const recoil = g.userData.recoilUntil > now ? .08 : 0; g.userData.gunHolder.position.z = -.55 + recoil;
       const walkPhase = peer.moving ? Math.sin(now / 115) * .38 : 0;
       g.userData.legs.forEach((leg, i) => { leg.rotation.x = walkPhase * (i ? -1 : 1); });
-      if(g.userData.armsHold)g.userData.armsHold.rotation.x=peer.moving?walkPhase*.06:0;
-      if(g.userData.armsIdle)g.userData.armsIdle.rotation.x=peer.moving?-walkPhase*.1:0;
+      if(g.userData.armsHold){g.userData.armsHold.rotation.x=THREE.MathUtils.damp(g.userData.armsHold.rotation.x,peer.moving?walkPhase*.10:0,8,dt);g.userData.armsHold.rotation.z=THREE.MathUtils.damp(g.userData.armsHold.rotation.z,0,8,dt);}
+      if(g.userData.armsIdle){g.userData.armsIdle.rotation.x=THREE.MathUtils.damp(g.userData.armsIdle.rotation.x,peer.moving?-walkPhase*.12:0,8,dt);g.userData.armsIdle.rotation.z=THREE.MathUtils.damp(g.userData.armsIdle.rotation.z,peer.moving?Math.sin(now/135)*.13:0,7,dt);}
     });
     for (const [id, entry] of remote) if (!liveIds.has(id)) { scene.remove(entry.group); remote.delete(id); }
 
@@ -514,7 +518,7 @@
   api.state = () => {
     const p = api.position();
     return { ...p, firstPerson: api.firstPerson ? api.firstPerson() : false,
-      moving: api.moving ? api.moving() : false, running: api.running(), pitch: api.lookPitch ? api.lookPitch() : 0,
+      fight: !!window.campusGame?.isFighting?.(), moving: api.moving ? api.moving() : false, running: api.running(), pitch: api.lookPitch ? api.lookPitch() : 0,
       weapon: window.campusGame?.state?.().weapon || '' };
   };
   api.addTracer = addTracer;
