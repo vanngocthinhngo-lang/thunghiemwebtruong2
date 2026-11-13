@@ -109,7 +109,9 @@
   flatShape([[579,714],[793,603],[1000,951],[920,1051],[698,899]].map(world), .012, concreteMaterial);
   flatShape([[655,806],[765,747],[903,922],[819,981]].map(world), .014, mat(0x8c9e76));
   flatShape([[593,601],[745,521],[779,552],[626,640]].map(world), .015, mat(0x9aac83));
-  const court = [[405,450],[603,340],[703,480],[482,589]].map(world);
+  const rawCourt = [[405,450],[603,340],[703,480],[482,589]].map(world);
+  const courtCenter = rawCourt.reduce((s,p)=>[s[0]+p[0]/rawCourt.length,s[1]+p[1]/rawCourt.length],[0,0]);
+  const court = rawCourt.map(p=>[courtCenter[0]+(p[0]-courtCenter[0])*.62,courtCenter[1]+(p[1]-courtCenter[1])*.62]);
   flatShape(court, .035, new THREE.MeshStandardMaterial({ color: 0xffffff, map: grassMap, roughness: .96 }));
   for (let i = 0; i < 4; i++) lineXZ(court[i], court[(i + 1) % 4], .12, .07, materials.white);
   lineXZ([(court[0][0]+court[3][0])/2,(court[0][1]+court[3][1])/2], [(court[1][0]+court[2][0])/2,(court[1][1]+court[2][1])/2], .1, .07, materials.white);
@@ -122,13 +124,13 @@
   const halfLength = new THREE.Vector2(goalB[0]-goalA[0],goalB[1]-goalA[1]).length()/2;
   const halfWidth = new THREE.Vector2(court[0][0]-court[3][0],court[0][1]-court[3][1]).length()/2;
   const pitchPoint = (u,v) => [pitchCenter[0]+longAxis.x*u+shortAxis.x*v,pitchCenter[1]+longAxis.y*u+shortAxis.y*v];
-  const centerCircle = addMesh(new THREE.RingGeometry(3.35,3.48,64), new THREE.MeshBasicMaterial({color:0xecefe1,side:THREE.DoubleSide}), scene, pitchCenter[0], .085, pitchCenter[1]); centerCircle.rotation.x=-Math.PI/2; centerCircle.castShadow=false;
+  const centerCircle = addMesh(new THREE.RingGeometry(2.05,2.16,64), new THREE.MeshBasicMaterial({color:0xecefe1,side:THREE.DoubleSide}), scene, pitchCenter[0], .085, pitchCenter[1]); centerCircle.rotation.x=-Math.PI/2; centerCircle.castShadow=false;
   [-1,1].forEach(side=>{
     const u=side*(halfLength-7.2), a=pitchPoint(u,-halfWidth*.53), b=pitchPoint(u,halfWidth*.53);
     lineXZ(a,b,.09,.085,materials.white);
     const boxA=pitchPoint(side*(halfLength-13),-halfWidth*.53),boxB=pitchPoint(side*halfLength,-halfWidth*.53),boxC=pitchPoint(side*halfLength,halfWidth*.53),boxD=pitchPoint(side*(halfLength-13),halfWidth*.53);
     [[boxA,boxB],[boxB,boxC],[boxC,boxD]].forEach(v=>lineXZ(v[0],v[1],.09,.085,materials.white));
-    const gCenter=pitchPoint(side*halfLength,0), outward=[longAxis.x*side,longAxis.y*side], goalWidth=9.0, goalHeight=2.55, depth=1.7;
+    const gCenter=pitchPoint(side*halfLength,0), outward=[longAxis.x*side,longAxis.y*side], goalWidth=5.4, goalHeight=2.05, depth=1.35;
     const postMaterial=mat(0xf4f4e9,.34,.12), postA=[gCenter[0]-shortAxis.x*goalWidth/2,gCenter[1]-shortAxis.y*goalWidth/2], postB=[gCenter[0]+shortAxis.x*goalWidth/2,gCenter[1]+shortAxis.y*goalWidth/2];
     [postA,postB].forEach(pos=>addMesh(new THREE.CylinderGeometry(.095,.11,goalHeight,12),postMaterial,scene,pos[0],goalHeight/2+.08,pos[1]));
     const bar=addMesh(new THREE.CylinderGeometry(.095,.095,goalWidth,12),postMaterial,scene,gCenter[0],goalHeight+.08,gCenter[1]); bar.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(shortAxis.x,0,shortAxis.y).normalize());
@@ -310,20 +312,24 @@
     addMesh(new THREE.ConeGeometry(.022, .07, 7), skin, head, 0, -.025, -.153).rotation.x = -Math.PI / 2;
     // Ears, gloves and shoulders.
     [-1, 1].forEach(s => addMesh(new THREE.SphereGeometry(.038, 9, 8), skin, head, s * .145, 0, 0));
-    const armsHold = new THREE.Group(); root.add(armsHold);
-    // Raised forearms are only visible while a weapon is equipped.
-    segment(armsHold, [.31,1.46,.00], [.26,1.29,-.22], .105, shirt);
-    segment(armsHold, [.26,1.29,-.22], [.12,1.28,-.48], .082, shirt);
-    segment(armsHold, [-.31,1.46,.00], [-.29,1.26,-.27], .105, shirt);
-    segment(armsHold, [-.29,1.26,-.27], [-.045,1.29,-.51], .078, shirt);
-    addMesh(new THREE.SphereGeometry(.075, 10, 8), mat(0x3b4141), armsHold, .12, 1.27, -.49);
-    addMesh(new THREE.SphereGeometry(.07, 10, 8), mat(0x3b4141), armsHold, -.045, 1.28, -.52);
-    const armsIdle = new THREE.Group(); root.add(armsIdle);
-    segment(armsIdle,[.31,1.46,0],[.40,1.17,.03],.105,shirt);segment(armsIdle,[.40,1.17,.03],[.38,.95,.02],.082,shirt);
-    segment(armsIdle,[-.31,1.46,0],[-.40,1.17,.03],.105,shirt);segment(armsIdle,[-.40,1.17,.03],[-.38,.95,.02],.082,shirt);
-    addMesh(new THREE.SphereGeometry(.073,10,8),mat(0x3b4141),armsIdle,.38,.94,.02);addMesh(new THREE.SphereGeometry(.073,10,8),mat(0x3b4141),armsIdle,-.38,.94,.02);
-
-    armsHold.visible = false; armsIdle.visible = true;
+    const makeArmPair = (parent, holding) => {
+      const pivots=[];
+      [-1,1].forEach(side=>{
+        const pivot=new THREE.Group();pivot.position.set(side*.305,1.44,0);parent.add(pivot);
+        addMesh(new THREE.SphereGeometry(.115,14,11),shirt,pivot,0,-.015,0);
+        const elbow=holding?[side*-.035,-.23,-.20]:[side*.10,-.31,.035];
+        const wrist=holding?[side*-.155,-.17,-.52]:[side*.16,-.61,.075];
+        segment(pivot,[0,0,0],elbow,.092,shirt,12);
+        segment(pivot,elbow,wrist,.073,shirt,12);
+        addMesh(new THREE.SphereGeometry(.073,14,10),skin,pivot,wrist[0],wrist[1],wrist[2]);
+        addMesh(new THREE.CapsuleGeometry(.022,.055,3,7),skin,pivot,wrist[0]+side*.035,wrist[1]+.012,wrist[2]-.018).rotation.z=side*.35;
+        pivots.push(pivot);
+      });
+      return pivots;
+    };
+    const armsHold=new THREE.Group();root.add(armsHold);const holdArms=makeArmPair(armsHold,true);
+    const armsIdle=new THREE.Group();root.add(armsIdle);const idleArms=makeArmPair(armsIdle,false);
+    armsHold.visible=false;armsIdle.visible=true;
     const legs = [];
     [-1, 1].forEach((s, i) => {
       const hip = new THREE.Group(); hip.position.set(s * .135, .88, 0); root.add(hip);
@@ -335,8 +341,8 @@
       legs.push(hip);
     });
     const gunHolder = new THREE.Group(); gunHolder.position.set(.02, 1.29, -.55); root.add(gunHolder);
-    const label = makeNameSprite(name, '#ffffff'); label.position.set(0, 2.22, 0); root.add(label);
-    root.userData = { legs, gunHolder, label, shirt, name, isLocal, shirtMesh: torso, armsHold, armsIdle };
+    const label = makeNameSprite(name, '#ffffff'); label.position.set(0, 2.22, 0); label.visible=!isLocal; root.add(label);
+    root.userData = { legs, gunHolder, label, shirt, name, isLocal, shirtMesh: torso, armsHold, armsIdle, idleArms, holdArms, head };
     return root;
   }
 
@@ -434,16 +440,18 @@
     const weapon = state.fight ? (state.weapon || '') : '';
     // When combat is switched off, forcibly clear both weapon meshes and muzzle effects.
     if (!state.fight && localHeldWeapon) { setHeldGun(local, ''); localHeldWeapon = ''; }
-    local.position.set(p.x, moving ? Math.abs(Math.sin(now / 90)) * .025 : 0, p.z); local.rotation.y = yaw;
+    const jumpY=api.jumpHeight?api.jumpHeight():0;
+    local.position.set(p.x,jumpY+(moving ? Math.abs(Math.sin(now / 175)) * .045 : 0),p.z); local.rotation.y = yaw;
     local.visible = !isFirst;
     const newColor = api.currentColor ? api.currentColor() : '#267c65';
     if (localColor !== newColor) { localColor = newColor; local.userData.shirtMesh.material.color.set(newColor); }
-    local.userData.legs.forEach((leg, i) => { leg.rotation.x = moving ? Math.sin(now / (running ? 85 : 130) + i * Math.PI) * (running ? .64 : .42) : THREE.MathUtils.damp(leg.rotation.x, 0, 10, dt); });
-    const stride = moving ? Math.sin(now / (running ? 85 : 130)) : 0;
-    if (local.userData.armsHold) { local.userData.armsHold.rotation.x = THREE.MathUtils.damp(local.userData.armsHold.rotation.x, moving ? stride * .10 : 0, 8, dt); local.userData.armsHold.rotation.z = THREE.MathUtils.damp(local.userData.armsHold.rotation.z, 0, 8, dt); }
-    if (local.userData.armsIdle) { local.userData.armsIdle.rotation.x = THREE.MathUtils.damp(local.userData.armsIdle.rotation.x, moving ? -stride * .12 : 0, 8, dt); local.userData.armsIdle.rotation.z = THREE.MathUtils.damp(local.userData.armsIdle.rotation.z, moving ? Math.sin(now / (running ? 90 : 140)) * .18 : 0, 7, dt); }
-    local.userData.shirtMesh.position.y = THREE.MathUtils.damp(local.userData.shirtMesh.position.y, 1.22 + (moving ? Math.abs(stride) * .045 : 0), 10, dt);
-    local.rotation.z = THREE.MathUtils.damp(local.rotation.z, moving ? Math.sin(now / (running ? 90 : 140)) * .018 : 0, 7, dt);
+    const phase=now/(running?112:178),stride=moving?Math.sin(phase):0;
+    local.userData.legs.forEach((leg,i)=>{leg.rotation.x=moving?Math.sin(phase+i*Math.PI)*(running?.72:.52):THREE.MathUtils.damp(leg.rotation.x,0,9,dt);});
+    if(local.userData.holdArms)local.userData.holdArms.forEach(arm=>{arm.rotation.x=THREE.MathUtils.damp(arm.rotation.x,moving?stride*.10:0,7,dt);});
+    if(local.userData.idleArms)local.userData.idleArms.forEach((arm,i)=>{arm.rotation.x=THREE.MathUtils.damp(arm.rotation.x,moving?(i===0?stride*.55:-stride*.55):0,8,dt);arm.rotation.z=THREE.MathUtils.damp(arm.rotation.z,moving?(i===0?-.035:.035):0,8,dt);});
+    local.userData.shirtMesh.position.y=THREE.MathUtils.damp(local.userData.shirtMesh.position.y,1.22+(moving?Math.abs(stride)*.035:0),9,dt);
+    if(local.userData.head)local.userData.head.rotation.z=THREE.MathUtils.damp(local.userData.head.rotation.z,moving?Math.sin(now/300)*.025:0,6,dt);
+    local.rotation.z=THREE.MathUtils.damp(local.rotation.z,moving?Math.sin(phase)*.022:0,7,dt);
     if (localHeldWeapon !== weapon) { setHeldGun(local, weapon); localHeldWeapon = weapon; }
     const kickback = local.userData.recoilUntil > now ? Math.sin((local.userData.recoilUntil - now) / 90 * Math.PI) * .10 : 0;
     local.userData.gunHolder.position.z = -.55 + kickback; local.userData.gunHolder.rotation.x = -kickback * 1.4;
@@ -457,8 +465,9 @@
       const dir = v3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
       camera.lookAt(camera.position.clone().add(dir.multiplyScalar(18)));
     } else {
-      const follow = v3(p.x + Math.sin(yaw) * 5.1, 2.55 + pitch * 1.8, p.z + Math.cos(yaw) * 5.1);
-      const target = v3(p.x, 1.18, p.z);
+      const shoulderX=Math.cos(yaw)*.88,shoulderZ=-Math.sin(yaw)*.88;
+      const follow=v3(p.x+Math.sin(yaw)*4.8+shoulderX,2.55+pitch*1.8+jumpY,p.z+Math.cos(yaw)*4.8+shoulderZ);
+      const target=v3(p.x-Math.sin(yaw)*8.0,1.35+jumpY,p.z-Math.cos(yaw)*8.0);
       if (!camReady) { camera.position.copy(follow); camReady = true; }
       camera.position.lerp(follow, 1 - Math.exp(-7 * dt));
       camera.lookAt(target);
@@ -489,10 +498,10 @@
       const peerWeapon = (peer.fighting || peer.f) ? (peer.weapon || '') : '';
       if (entry.weapon !== peerWeapon) { entry.weapon = peerWeapon; setHeldGun(g, entry.weapon); }
       const recoil = g.userData.recoilUntil > now ? .08 : 0; g.userData.gunHolder.position.z = -.55 + recoil;
-      const walkPhase = peer.moving ? Math.sin(now / 115) * .38 : 0;
-      g.userData.legs.forEach((leg, i) => { leg.rotation.x = walkPhase * (i ? -1 : 1); });
-      if(g.userData.armsHold){g.userData.armsHold.rotation.x=THREE.MathUtils.damp(g.userData.armsHold.rotation.x,peer.moving?walkPhase*.10:0,8,dt);g.userData.armsHold.rotation.z=THREE.MathUtils.damp(g.userData.armsHold.rotation.z,0,8,dt);}
-      if(g.userData.armsIdle){g.userData.armsIdle.rotation.x=THREE.MathUtils.damp(g.userData.armsIdle.rotation.x,peer.moving?-walkPhase*.12:0,8,dt);g.userData.armsIdle.rotation.z=THREE.MathUtils.damp(g.userData.armsIdle.rotation.z,peer.moving?Math.sin(now/135)*.13:0,7,dt);}
+      const walkPhase=peer.moving?Math.sin(now/175)*.48:0;
+      g.userData.legs.forEach((leg,i)=>{leg.rotation.x=walkPhase*(i?-1:1);});
+      if(g.userData.idleArms)g.userData.idleArms.forEach((arm,i)=>{arm.rotation.x=THREE.MathUtils.damp(arm.rotation.x,peer.moving?(i===0?walkPhase:-walkPhase):0,8,dt);});
+      if(g.userData.holdArms)g.userData.holdArms.forEach(arm=>{arm.rotation.x=THREE.MathUtils.damp(arm.rotation.x,peer.moving?walkPhase*.08:0,8,dt);});
     });
     for (const [id, entry] of remote) if (!liveIds.has(id)) { scene.remove(entry.group); remote.delete(id); }
 
@@ -522,6 +531,7 @@
       weapon: window.campusGame?.state?.().weapon || '' };
   };
   api.addTracer = addTracer;
+  api.aimRay = () => {const dir=new THREE.Vector3();camera.getWorldDirection(dir);const player=api.position(),originX=player.x-Math.sin(player.yaw)*.62,originZ=player.z-Math.cos(player.yaw)*.62,focus=camera.position.clone().add(dir.multiplyScalar(24));return {x:originX,z:originZ,yaw:Math.atan2(focus.z-originZ,focus.x-originX)};};
   api.fireVisual = flashWeapon;
   api.peerList = () => api.getPeers ? api.getPeers() : [];
   api.peerCount = () => remote.size;

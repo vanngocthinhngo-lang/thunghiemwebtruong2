@@ -6,7 +6,9 @@ const buildings=CAMPUS.buildings.map((b,i)=>{let p=b.poly.map(world),a=b.anchor?
 const boundary=CAMPUS.boundary.map(world),sat=new Image();sat.src='assets/ute-satellite.jpg';
 const spawn=world([525,803]);
 let W=innerWidth,H=innerHeight,dpr=Math.min(devicePixelRatio||1,2),mode='aerial',yaw=.12,pitch=.95,zoom=1,night=false,selected=-1,walkYaw=-1.15,walkPitch=.08,firstPerson=false,speed=1,running=false,player={x:spawn[0],z:spawn[1]},move={x:0,y:0},keys={},pan={x:0,z:0};
-let myColor='#267c65',avatarColor=myColor,remotePlayers=[];let avatarRot=false;let cam,faces=[],labels=[],last=performance.now();
+let myColor='#267c65',avatarColor=myColor,remotePlayers=[];let avatarRot=false;let cam,faces=[],labels=[],last=performance.now(),jumpStartedAt=0;
+function jump(){const t=performance.now();if(t-jumpStartedAt<520)return;jumpStartedAt=t;}
+function jumpHeight(){if(!jumpStartedAt)return 0;const t=(performance.now()-jumpStartedAt)/680;if(t>=1){jumpStartedAt=0;return 0;}return Math.sin(Math.PI*t)*.92;}
 const trees=[[287,370],[291,430],[307,684],[345,689],[370,678],[428,710],[531,795],[562,818],[598,842],[659,885],[720,921],[790,951],[817,936],[940,758],[928,712],[916,662],[1020,783],[1100,701],[826,371],[815,322],[660,265],[614,291],[596,256],[561,302],[422,414],[461,437],[511,394],[532,356],[640,772],[676,797],[733,822],[749,749],[793,808],[813,853]].map(world);
 function resize(){W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,2);canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
 function camera(){if(mode!=='walk'){let dist=550/zoom;cam={x:Math.sin(mode==='satellite'?0:yaw)*Math.cos(mode==='satellite'?Math.PI/2:pitch)*dist+pan.x,y:Math.sin(mode==='satellite'?Math.PI/2:pitch)*dist,z:Math.cos(mode==='satellite'?0:yaw)*Math.cos(mode==='satellite'?Math.PI/2:pitch)*dist+pan.z,tx:pan.x,ty:0,tz:pan.z,cx:W<600?W*.49:W*.61,cy:W<600?H*.46:H*.53,ortho:true,scale:Math.min(W<600?W/290:(W-340)/350,H/340)*zoom};}else{let follow=firstPerson?0:6;cam={x:player.x+Math.sin(walkYaw)*follow,y:firstPerson?1.7:3.8,z:player.z+Math.cos(walkYaw)*follow,tx:player.x-Math.sin(walkYaw)*25,ty:1.5,tz:player.z-Math.cos(walkYaw)*25,cx:W/2,cy:H*.48,ortho:false};}
@@ -81,7 +83,7 @@ function tick(now){let dt=Math.min((now-last)/1000,.05);last=now;if(mode==='walk
 
 function drawPeerNames(){ctx.save();ctx.font='600 12px sans-serif';ctx.textAlign='center';for(const p of remotePlayers){const q=project([p.x,2.4,p.z]);if(q.d<2||q.x<0||q.x>W||q.y<0||q.y>H)continue;const width=ctx.measureText(p.name).width+18;ctx.fillStyle='#18362fdd';ctx.fillRect(q.x-width/2,q.y-20,width,24);ctx.fillStyle='white';ctx.fillText(p.name,q.x,q.y-4)}ctx.restore()}
 window.campusBridge={
- hook:f=>frameHooks.push(f),overlay:f=>overlayHooks.push(f),running:()=>!!(running||keys.Shift),isDown:k=>!!keys[k],
+ hook:f=>frameHooks.push(f),overlay:f=>overlayHooks.push(f),running:()=>!!(running||keys.Shift),isDown:k=>!!keys[k],jump,jumpHeight,
  moving:()=>!!(Math.abs(move.x)+Math.abs(move.y)>0.08||keys.w||keys.a||keys.s||keys.d||keys.ArrowUp||keys.ArrowDown||keys.ArrowLeft||keys.ArrowRight),lookPitch:()=>walkPitch,firstPerson:()=>firstPerson,currentColor:()=>myColor,
  gfx:{box,ground,lineGround,project,world:p=>world(p),clear},
  color:c=>{if(/^#[0-9a-f]{6}$/i.test(c))myColor=c},

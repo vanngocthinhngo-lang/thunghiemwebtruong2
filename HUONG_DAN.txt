@@ -1,4 +1,4 @@
-UTE CAMPUS – BẢN 9 · 3D MULTIPLAYER + SÂN BÓNG 90 GIÂY
+UTE CAMPUS – BẢN 11 · AVATAR / AIM / SÂN BÓNG + NHẢY
 ===========================================================
 
 1) CẬP NHẬT MÃ NGUỒN
@@ -34,6 +34,15 @@ UTE CAMPUS – BẢN 9 · 3D MULTIPLAYER + SÂN BÓNG 90 GIÂY
   và bấm “Tìm trận bóng”. Số online là người đang kết nối; số trong trận chỉ tính người đã
   bấm tham gia. Người thứ ba tham gia sẽ khiến BOT tự bù vào đội còn thiếu.
 
+4) ĐIỀU KHIỂN NHÂN VẬT VÀ ĐẤU SÚNG
+- Nhân vật đã có khớp vai/khuỷu/cổ tay riêng; hai tay đánh ngược nhịp chân khi đi bộ/chạy.
+- Nhãn tên phía trên nhân vật của chính bạn được ẩn; chỉ giữ tên người chơi khác.
+- Khi bật đấu súng, tâm ngắm nằm giữa màn hình và hướng theo góc camera; đường đạn lấy cùng hướng ngắm.
+- Khi server xác nhận trúng địch, tâm ngắm đổi màu và hiện thông báo xác nhận.
+- Phím E nhặt súng; chuột trái hoặc nút Bắn để bắn; R nạp đạn; G bật/tắt đấu súng.
+- Space hoặc nút NHẢY để nhảy. Trên điện thoại có nút Nhảy riêng.
+- Khi tắt đấu súng, cả mô hình súng trên tay lẫn súng góc nhìn thứ nhất đều được cất.
+
 4) CHẾ ĐỘ SÂN BÓNG
 - Đi đến sân bóng, nhấn “Tìm trận bóng”.
 - Mỗi trận dài 90 giây; bảng tỷ số và đồng hồ hiển thị ở phía trên màn hình.
@@ -44,15 +53,14 @@ UTE CAMPUS – BẢN 9 · 3D MULTIPLAYER + SÂN BÓNG 90 GIÂY
   sau khi trận chính thức bắt đầu cần chờ trận kế tiếp.
 - Tối đa 10 người tham gia trận (tính cả BOT nếu đang bù đội), tối đa 5 đấu 5.
   Danh sách người thật được sắp xếp ổn định; BOT tự lấp vị trí còn thiếu để cân bằng đội.
-- Bóng bị giới hạn trong biên sân: chạm đường biên ngang/dọc thì bật lại; đi qua khoảng
-  giữa hai cột khung thành thì tính bàn và đưa bóng về giữa sân.
+- Sân bóng đã thu nhỏ đồng bộ cả bản đồ và vật lý. Bóng chỉ được đá chủ động khi người chơi đứng gần, bằng phím R hoặc nút Sút; lực sút vừa phải, bóng có ma sát và bật lại ở biên. Chỉ khi bóng qua miệng khung thành trong thời gian thi đấu mới tính bàn và đưa bóng về giữa sân.
 - Nút “Rời sân bóng” để rời trận. Vào phòng chung trước khi tìm trận để gặp người thật.
 
 5) CHẾ ĐỘ ĐẤU SÚNG
 - Chế độ này độc lập với sân bóng. Khi nhấn “Đấu súng: Bật”, nhân vật tự trang bị một
   khẩu súng ngắn và súng xuất hiện trên tay ngay. Đi đến súng nằm trên đất, nhấn E hoặc
   nút “Lượm” để đổi sang loại súng khác.
-- Chuột trái / nút Bắn để bắn; R / nút ↻ để nạp đạn; G bật/tắt chế độ đấu súng.
+- Chuột trái / nút Bắn để bắn; R / nút ↻ để nạp đạn; tâm ngắm bám hướng chính giữa camera, đổi màu khi xác nhận trúng; G bật/tắt chế độ đấu súng.
 - Khi tắt đấu súng, súng được cất, mô hình súng ở tay biến mất và hai tay chuyển về tư thế thả tự nhiên.
 - Có sáu nhóm mô hình súng: pistol, SMG, AR, LMG, shotgun và sniper.
 
@@ -64,7 +72,7 @@ Máy tính:
   Chuột trái              : Bắn (khi đấu súng bật và đã nhặt súng)
   E                       : Nhặt súng
   R                       : Nạp đạn
-  Space                   : Bắn
+  Space                   : Nhảy / nút Nhảy trên màn hình
   G                       : Bật / tắt đấu súng
   Nút ◉                   : Đổi góc nhìn thứ nhất / thứ ba
 
@@ -102,3 +110,9 @@ LƯU Ý KỸ THUẬT
 - Kết quả kiểm tra trong gói này gồm kiểm tra cú pháp JavaScript và kiểm thử mô phỏng logic
   trò chơi phía máy khách. Chưa xác minh trận đấu trực tiếp bằng hai tài khoản trên hai máy;
   cần chạy hai trình duyệt thật sau khi deploy để kiểm tra Presence và Broadcast.
+
+5) GHI CHÚ BẢN 11
+- Sân bóng được thu nhỏ theo tâm mặt bằng để tránh lấn vào dãy phòng/cây; hai khung thành được thu theo chiều ngang.
+- Bóng chỉ được sút khi người chơi đứng gần và chủ động nhấn R hoặc nút Sút; lực sút và ma sát đã giảm để dễ kiểm soát.
+- Bóng bật lại ở hai biên dọc; ở hai biên ngang chỉ được tính bàn khi đi qua miệng khung thành trong thời gian trận đấu chính thức.
+- Đã kiểm tra cú pháp JavaScript, ID HTML không trùng, mô phỏng sút bóng và kiểm thử bóng đi qua khung thành. Kết nối nhiều thiết bị/Supabase và chất lượng hiển thị thực tế vẫn cần kiểm tra sau khi deploy.

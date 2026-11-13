@@ -13,17 +13,18 @@
   sniper :{n:'Bắn tỉa Diều Hâu', dmg:75,rate:.8, mag:5, range:110,pel:1,spread:.003,col:'#5a7aa6',len:2.3}
  };
  const ORDER=['pistol','smg','ar','shotgun','sniper','lmg','pistol','smg','ar','shotgun','ar','smg'];
- const RESPAWN=25000,SAFE_R=26,K=1.5,BALL_DRAG=.36;
+ const RESPAWN=25000,SAFE_R=26,K=1.5,BALL_DRAG=.42;
  const cen=a=>[a.reduce((s,v)=>s+v[0],0)/a.length,a.reduce((s,v)=>s+v[1],0)/a.length];
+ const shrink=(poly,k)=>{const c=cen(poly);return poly.map(v=>[c[0]+(v[0]-c[0])*k,c[1]+(v[1]-c[1])*k])};
  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2], norm=v=>{const l=Math.hypot(v[0],v[1])||1;return[v[0]/l,v[1]/l]};
  const grow=(a,k)=>{const c=cen(a);return a.map(v=>[c[0]+(v[0]-c[0])*k,c[1]+(v[1]-c[1])*k])};
  function inside(x,z,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if(((a[1]>z)!==(b[1]>z))&&(x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0]))c=!c}return c}
 
  // ---- sân bóng & điểm an toàn ----
- const court=[[405,450],[603,340],[703,480],[482,589]].map(p=>g.world(p)),courtWide=grow(court,1.1),center=cen(court);
+ const court=shrink([[405,450],[603,340],[703,480],[482,589]].map(p=>g.world(p)),.62),courtWide=grow(court,1.015),center=cen(court);
  const goalA=mid(court[3],court[0]),goalB=mid(court[1],court[2]),pitchCenter=mid(goalA,goalB);
  const longAxis=norm([goalB[0]-goalA[0],goalB[1]-goalA[1]]),shortAxis=[-longAxis[1],longAxis[0]];
- const halfLength=Math.hypot(goalB[0]-goalA[0],goalB[1]-goalA[1])/2,halfWidth=Math.hypot(court[0][0]-court[3][0],court[0][1]-court[3][1])/2,goalHalf=4.5;
+ const halfLength=Math.hypot(goalB[0]-goalA[0],goalB[1]-goalA[1])/2,halfWidth=Math.hypot(court[0][0]-court[3][0],court[0][1]-court[3][1])/2,goalHalf=2.55;
  const toField=(x,z)=>[(x-pitchCenter[0])*longAxis[0]+(z-pitchCenter[1])*longAxis[1],(x-pitchCenter[0])*shortAxis[0]+(z-pitchCenter[1])*shortAxis[1]];
  const fromField=(u,v)=>[pitchCenter[0]+longAxis[0]*u+shortAxis[0]*v,pitchCenter[1]+longAxis[1]*u+shortAxis[1]*v];
  const safeC=g.world([525,803]),inSafe=(x,z)=>Math.hypot(x-safeC[0],z-safeC[1])<SAFE_R;
@@ -98,10 +99,11 @@
   const elapsed=Math.max(0,(t-ball.t)/1000),decay=Math.exp(-BALL_DRAG*elapsed),bp=ballPos(t),velX=ball.vx*decay,velZ=ball.vz*decay;
   let [u,v]=toField(bp[0],bp[1]),vu=velX*longAxis[0]+velZ*longAxis[1],vv=velX*shortAxis[0]+velZ*shortAxis[1];
   let reset=false;
-  if(Math.abs(v)>halfWidth-.45){v=Math.sign(v)*(halfWidth-.45);vv=-vv*.68;reset=true;}
-  if(Math.abs(u)>halfLength-.55){
-   if(Math.abs(v)<goalHalf && Math.abs(u)<halfLength+2.5 && matchStartedAt && t<matchEndAt){goalEvent(u>0?0:1);return;}
-   u=Math.sign(u)*(halfLength-.55);vu=-vu*.62;reset=true;
+  if(Math.abs(v)>halfWidth-.48){v=Math.sign(v)*(halfWidth-.48);vv=-vv*.72;reset=true;}
+  if(Math.abs(u)>halfLength-.48){
+   const inGoalMouth=Math.abs(v)<goalHalf;
+   if(inGoalMouth&&matchStartedAt&&t<matchEndAt){if(Math.abs(u)>halfLength+.10){goalEvent(u>0?0:1);return;}}
+   else{u=Math.sign(u)*(halfLength-.48);vu=-vu*.72;reset=true;}
   }
   const pos=fromField(u,v),velocity=[longAxis[0]*vu+shortAxis[0]*vv,longAxis[1]*vu+shortAxis[1]*vv];
   ball={x:pos[0],z:pos[1],vx:velocity[0],vz:velocity[1],t};
@@ -115,7 +117,7 @@
   const speed=3.3;bot.x+=dx/d*Math.min(d,speed*dt);bot.z+=dz/d*Math.min(d,speed*dt);
   bot.yaw=Math.atan2(-dx,-dz);
   if(d<1.65&&t-lastBotKick>1700&&isMatchHost()){
-   lastBotKick=t;const dir=[-longAxis[0],-longAxis[1]];kick(dir[0]*24,dir[1]*24);
+   lastBotKick=t;const dir=[-longAxis[0],-longAxis[1]];kick(dir[0]*10.0,dir[1]*10.0);
   }
   if(t-lastBotSync>120&&isMatchHost()){lastBotSync=t;net.emit('botstate',{x:+bot.x.toFixed(2),z:+bot.z.toFixed(2),yaw:+bot.yaw.toFixed(3)});}
   return {id:'ute-campus-bot',name:'BOT UTE',color:'#d94d42',x:bot.x,z:bot.z,yaw:bot.yaw,weapon:'',moving:d>1.2,firing:false,hp:100,fighting:false,queue:true,queueAt:matchJoinAt,team:1,bot:true};
@@ -137,9 +139,10 @@
   const w=WEAPONS[weapon];
   if(ammo<=0){reload();nextShot=t+300;return}
   ammo--;nextShot=t+1000/w.rate;
-  const base=Math.atan2(-Math.cos(p.yaw),-Math.sin(p.yaw)),d=[];
+  const aim=api.aimRay?.()||{x:p.x-Math.sin(p.yaw)*1.2,z:p.z-Math.cos(p.yaw)*1.2,yaw:Math.atan2(-Math.cos(p.yaw),-Math.sin(p.yaw))};
+  const base=aim.yaw,d=[];
   for(let i=0;i<w.pel;i++)d.push(+(base+(Math.random()+Math.random()-1)*w.spread).toFixed(3));
-  const m={x:+(p.x-Math.sin(p.yaw)*1.2).toFixed(2),z:+(p.z-Math.cos(p.yaw)*1.2).toFixed(2),d,w:weapon};
+  const m={x:+aim.x.toFixed(2),z:+aim.z.toFixed(2),d,w:weapon};
   onShot(m,true);net.emit('shot',m);
   if(ammo<=0)reload();
  }
@@ -185,19 +188,19 @@
  }
 
  // ---- bóng ----
- function displayBallPos(t){const raw=ballPos(t),[u,v]=toField(raw[0],raw[1]);const du=Math.max(-halfLength-1.45,Math.min(halfLength+1.45,u)),dv=Math.max(-halfWidth+.28,Math.min(halfWidth-.28,v));return fromField(du,dv)}
+ function displayBallPos(t){const raw=ballPos(t),[u,v]=toField(raw[0],raw[1]);const du=Math.max(-halfLength-.9,Math.min(halfLength+.9,u)),dv=Math.max(-halfWidth+.45,Math.min(halfWidth-.45,v));return fromField(du,dv)}
  function kick(vx,vz){const bp=ballPos(now());ball={x:bp[0],z:bp[1],vx,vz,t:now()};net.emit('kick',{x:+bp[0].toFixed(2),z:+bp[1].toFixed(2),vx:+vx.toFixed(2),vz:+vz.toFixed(2)})}
+ function kickBall(){
+  if(!ballOn||!matchQueue||fight||!alive)return;
+  const p=api.position(),bp=ballPos(now()),dist=Math.hypot(bp[0]-p.x,bp[1]-p.z);
+  if(dist>2.25){say('Hãy di chuyển sát bóng rồi nhấn R hoặc nút Sút.');return;}
+  const dir=[-Math.sin(p.yaw),-Math.cos(p.yaw)],power=api.running()?11.4:10.2;
+  lastKick=now();kick(dir[0]*power,dir[1]*power);say('⚽ Đã sút bóng!');
+ }
  function ballTick(){
   if(!ballOn)return;
-  const t=now(),p=api.position(),bp=ballPos(t);
-  // Match physics and clock continue even while the host inspects the aerial map.
-  // Only a player actually in walk mode can touch the ball.
-  const d=Math.hypot(bp[0]-p.x,bp[1]-p.z);
-  if(api.mode()==='walk'&&alive&&d<1.8&&t-lastKick>320){
-   lastKick=t;let dx=bp[0]-p.x,dz=bp[1]-p.z;
-   if(d<.05){dx=-Math.sin(p.yaw);dz=-Math.cos(p.yaw)}else{dx/=d;dz/=d}
-   const sp=api.running()?25:18;kick(dx*sp,dz*sp);
-  }
+  const t=now();
+  // Ball moves only after a deliberate kick; players must face the target direction.
   if(matchQueue&&isMatchHost()&&!matchStartedAt&&matchQueueStartedAt&&t-matchQueueStartedAt>=60000){
    matchStartedAt=t;matchEndAt=t+90000;matchEnded=false;matchScoreA=0;matchScoreB=0;lastMatchSync=t;
    net.emit('matchState',{kind:'start',queueStartedAt:matchQueueStartedAt,startedAt:matchStartedAt,endsAt:matchEndAt,scoreA:matchScoreA,scoreB:matchScoreB});
@@ -211,9 +214,9 @@
 
  // ---- sự kiện từ người khác ----
  net.on('shot',m=>onShot(m,false));
- net.on('hit',m=>{if(m&&m.s===net.self()){say('Trúng '+net.nameOf(m.from)+'! (còn '+(+m.hp||0)+' máu)')}});
+ net.on('hit',m=>{if(m&&m.s===net.self()){const reticle=$('crosshair');reticle?.classList.add('hit-confirm');setTimeout(()=>reticle?.classList.remove('hit-confirm'),220);say('🎯 BẮN TRÚNG '+net.nameOf(m.from)+'! (còn '+(+m.hp||0)+' máu)')}});
  net.on('kill',m=>{if(m&&m.s===net.self()){kills++;say('Bạn hạ gục '+net.nameOf(m.from)+'! Tổng: '+kills)}});
- net.on('kick',m=>{if(m&&[m.x,m.z,m.vx,m.vz].every(finite)&&Math.hypot(m.vx,m.vz)<40)ball={x:m.x,z:m.z,vx:m.vx,vz:m.vz,t:now()}});
+ net.on('kick',m=>{if(m&&[m.x,m.z,m.vx,m.vz].every(finite)&&Math.hypot(m.vx,m.vz)<16)ball={x:m.x,z:m.z,vx:m.vx,vz:m.vz,t:now()}});
  net.on('botstate',m=>{if(m&&[m.x,m.z,m.yaw].every(finite)&&Math.abs(m.x)<190&&Math.abs(m.z)<190){bot.x=m.x;bot.z=m.z;bot.yaw=m.yaw;bot.last=now();}});
  net.on('ballreset',()=>{ball={x:center[0],z:center[1],vx:0,vz:0,t:now()}});
  net.on('ballstate',m=>{if(m&&[m.x,m.z,m.vx,m.vz].every(finite)&&Math.hypot(m.vx,m.vz)<30)ball={x:m.x,z:m.z,vx:m.vx,vz:m.vz,t:now()}});
@@ -278,6 +281,7 @@
   $('killText').textContent=kills?'Hạ gục: '+kills:'';
   setBtn($('fireBtn'),fight&&!!w&&alive);setBtn($('reloadBtn'),fight&&!!w&&alive);
   setBtn($('pickBtn'),nearItem!=null);if(nearItem!=null)$('pickBtn').textContent='Lượm '+WEAPONS[spawns[nearItem].w].n;
+  const bp=ballOn?ballPos(now()):null,nearBall=!!(bp&&Math.hypot(bp[0]-p.x,bp[1]-p.z)<2.25);setBtn($('kickBtn'),!!(ballOn&&matchQueue&&nearBall&&!fight));
  }
  function tick(){
   const t=now();
@@ -286,7 +290,7 @@
   if(api.mode()==='walk'){
    const p=api.position();let best=1e9;
    if(fight&&alive)spawns.forEach((s,i)=>{if(isTaken(i))return;const d=Math.hypot(p.x-s.x,p.z-s.z);if(d<2.6&&d<best){best=d;nearItem=i}});
-   if(firing||api.isDown(' ')||api.isDown('f'))fire();
+   if(firing||api.isDown('f'))fire();
   }
   ballTick();
   const team=localTeam();if(matchQueue&&team!==lastAssignedTeam){lastAssignedTeam=team;placeOnTeam();}
@@ -301,13 +305,13 @@
  }
  $('fightBtn').onclick=()=>{fight=!fight;firing=false;if(fight){leaveMatch();weapon='pistol';ammo=WEAPONS.pistol.mag;reserve=WEAPONS.pistol.mag*2;reloadUntil=0;reloadTok++;say('Đã bật đấu súng và trang bị súng ngắn. Nhặt súng khác để đổi vũ khí.');}else{weapon=null;ammo=0;reserve=0;reloadUntil=0;reloadTok++;say('Đấu súng đã tắt. Súng được cất và hai tay trở về tư thế tự nhiên.');}};
  $('ballBtn').onclick=()=>{if(matchQueue)leaveMatch();else startMatch();};
- $('pickBtn').onclick=pick;$('reloadBtn').onclick=reload;
+ $('pickBtn').onclick=pick;$('reloadBtn').onclick=reload;$('kickBtn').onclick=kickBall;$('jumpBtn').onclick=()=>api.jump?.();
  $('exitWalk').onclick=()=>{firing=false;api.aerial()};
  const fb=$('fireBtn');fb.onpointerdown=e=>{firing=true;fb.setPointerCapture(e.pointerId)};fb.onpointerup=fb.onpointercancel=()=>{firing=false};
  addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||document.querySelector('dialog[open]'))return;
-  const k=e.key.toLowerCase();if(k==='e')pick();else if(k==='r')reload();else if(k==='g')$('fightBtn').click();
+  const k=e.key.toLowerCase();if(k==='e')pick();else if(k==='r'){if(ballOn&&!fight)kickBall();else reload();}else if(e.code==='Space'){e.preventDefault();if(!e.repeat)api.jump?.();}else if(k==='g')$('fightBtn').click();
  });
  setInterval(tick,33);
- window.campusGame={WEAPONS,spawns,inside,court,goalA,goalB,halfLength,halfWidth,state:()=>({fight,hp,weapon:fight?weapon:null,ammo,reserve,kills,ball,matchQueue,matchQueueStartedAt,matchStartedAt,matchEnded,matchScoreA,matchScoreB,matchEndAt,team:localTeam()}),isFighting:()=>fight&&alive&&!!weapon,setFiring:v=>{firing=!!v},botPlayer:()=>{return botNeeded()?{id:'ute-campus-bot',name:'BOT UTE',color:'#d94d42',x:bot.x,z:bot.z,yaw:bot.yaw,weapon:'',moving:true,firing:false,hp:100,fighting:false,queue:true,queueAt:matchJoinAt,team:1,bot:true}:null;},renderState:()=>({taken:spawns.map((_,i)=>!!isTaken(i)),ball:{visible:ballOn,...(()=>{const b=displayBallPos(now());return{x:b[0],z:b[1],speed:Math.hypot(ball.vx,ball.vz)}})()}}),_test:{onShot,fire,pick,setFight:v=>{fight=v},setNear:i=>{nearItem=i},field:toField,queuedPlayers,botNeeded,localTeam,displayBallPos}};
+ window.campusGame={WEAPONS,spawns,inside,court,goalA,goalB,halfLength,halfWidth,state:()=>({fight,hp,weapon:fight?weapon:null,ammo,reserve,kills,ball,matchQueue,matchQueueStartedAt,matchStartedAt,matchEnded,matchScoreA,matchScoreB,matchEndAt,team:localTeam()}),isFighting:()=>fight&&alive&&!!weapon,setFiring:v=>{firing=!!v},botPlayer:()=>{return botNeeded()?{id:'ute-campus-bot',name:'BOT UTE',color:'#d94d42',x:bot.x,z:bot.z,yaw:bot.yaw,weapon:'',moving:true,firing:false,hp:100,fighting:false,queue:true,queueAt:matchJoinAt,team:1,bot:true}:null;},renderState:()=>({taken:spawns.map((_,i)=>!!isTaken(i)),ball:{visible:ballOn,...(()=>{const b=displayBallPos(now());return{x:b[0],z:b[1],speed:Math.hypot(ball.vx,ball.vz)}})()}}),_test:{onShot,fire,pick,kickBall,advanceBall,setFight:v=>{fight=v},setNear:i=>{nearItem=i},field:toField,queuedPlayers,botNeeded,localTeam,displayBallPos}};
 })();
