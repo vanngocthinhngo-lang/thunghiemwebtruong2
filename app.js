@@ -58,7 +58,7 @@ function draw(){camera();ctx.clearRect(0,0,W,H);let bg=ctx.createLinearGradient(
  lineGround(world([665,815]),world([881,932]),2.6,'#cbd0be',.16);lineGround(world([749,774]),world([816,971]),2.6,'#cbd0be',.16);
  pixelGround([[593,601],[745,521],[779,552],[626,640]],'#9fb38c',.12);
  // Sports court lines follow the visible court orientation, rather than the old invented pitch.
- let court=[[405,450],[603,340],[703,480],[482,589]].map(world);polygonGround(court,'#45734e',.2);for(let i=0;i<4;i++)lineGround(court[i],court[(i+1)%4],.2,'#d1d9bc',.22);
+ let courtRaw=[[405,450],[603,340],[703,480],[482,589]].map(world),courtCenter=courtRaw.reduce((a,p)=>[a[0]+p[0]/4,a[1]+p[1]/4],[0,0]),court=courtRaw.map(p=>[courtCenter[0]+(p[0]-courtCenter[0])*.54,courtCenter[1]+(p[1]-courtCenter[1])*.54]);polygonGround(court,'#45734e',.2);for(let i=0;i<4;i++)lineGround(court[i],court[(i+1)%4],.2,'#d1d9bc',.22);
  let midA=[(court[0][0]+court[3][0])/2,(court[0][1]+court[3][1])/2],midB=[(court[1][0]+court[2][0])/2,(court[1][1]+court[2][1])/2];lineGround(midA,midB,.2,'#d1d9bc',.22);
  buildings.forEach(building);trees.forEach(t=>tree(...t));for(const h of frameHooks){try{h()}catch(e){console.error(e)}}
  if(mode==='walk'&&!firstPerson){avatarColor=myColor;avatar(window.campusGame?.state?.().weapon||'');}const originalPlayer=player,originalYaw=walkYaw;for(const peer of remotePlayers){player={x:peer.x,z:peer.z};walkYaw=peer.yaw;avatarColor=peer.color;avatar(peer.weapon||'');}player=originalPlayer;walkYaw=originalYaw;avatarColor=myColor;faces.sort((a,b)=>a.ground&&b.ground?a.height-b.height:a.ground?-1:b.ground?1:b.d-a.d);for(let f of faces){ctx.beginPath();f.p.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=f.c;ctx.fill();}

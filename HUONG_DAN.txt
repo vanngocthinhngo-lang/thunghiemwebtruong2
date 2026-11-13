@@ -1,4 +1,4 @@
-UTE CAMPUS – BẢN 11 · AVATAR / AIM / SÂN BÓNG + NHẢY
+UTE CAMPUS – BẢN 12 · AVATAR / GHI BÀN / SÂN BÓNG + NHẢY
 ===========================================================
 
 1) CẬP NHẬT MÃ NGUỒN
@@ -43,20 +43,20 @@ UTE CAMPUS – BẢN 11 · AVATAR / AIM / SÂN BÓNG + NHẢY
 - Space hoặc nút NHẢY để nhảy. Trên điện thoại có nút Nhảy riêng.
 - Khi tắt đấu súng, cả mô hình súng trên tay lẫn súng góc nhìn thứ nhất đều được cất.
 
-4) CHẾ ĐỘ SÂN BÓNG
+5) CHẾ ĐỘ SÂN BÓNG
 - Đi đến sân bóng, nhấn “Tìm trận bóng”.
-- Mỗi trận dài 90 giây; bảng tỷ số và đồng hồ hiển thị ở phía trên màn hình.
+- Mỗi trận dài đúng 90 giây tính từ lúc người đầu tiên vào sân; bảng tỷ số và đồng hồ hiển thị ở phía trên màn hình.
 - Khi số người tham gia là số lẻ (1, 3, 5, 7 hoặc 9), BOT UTE tự vào đội đang thiếu
   một người để hai bên cân bằng; khi đủ số chẵn, BOT rời sân.
-- Sảnh ghép người mở tối đa 60 giây; trong thời gian đó người chơi có thể đá thử với BOT.
-  Khi hết 60 giây, trận chính thức bắt đầu và đồng hồ thi đấu 90 giây mới chạy. Người đến
-  sau khi trận chính thức bắt đầu cần chờ trận kế tiếp.
+- Trận bắt đầu ngay khi người đầu tiên vào sân; nếu chỉ có một người, BOT tự bù đội đối phương.
+  Người thật khác có thể ghép vào trong 60 giây đầu; đồng hồ trận chạy 90 giây tính từ lúc bắt đầu.
+  Hết 60 giây thì khóa đội, người đến sau chờ trận kế tiếp.
 - Tối đa 10 người tham gia trận (tính cả BOT nếu đang bù đội), tối đa 5 đấu 5.
   Danh sách người thật được sắp xếp ổn định; BOT tự lấp vị trí còn thiếu để cân bằng đội.
-- Sân bóng đã thu nhỏ đồng bộ cả bản đồ và vật lý. Bóng chỉ được đá chủ động khi người chơi đứng gần, bằng phím R hoặc nút Sút; lực sút vừa phải, bóng có ma sát và bật lại ở biên. Chỉ khi bóng qua miệng khung thành trong thời gian thi đấu mới tính bàn và đưa bóng về giữa sân.
+- Sân bóng đã thu nhỏ đồng bộ giữa bản đồ toàn cảnh, mô hình 3D và vật lý. Bóng chỉ được đá chủ động khi người chơi đứng gần, bằng phím R hoặc nút Sút; bóng lăn có ma sát, bật lại ở biên. Khi tâm bóng vượt qua mặt phẳng khung thành trong phạm vi cột dọc, hệ thống cộng tỷ số, phát sự kiện cho các máy và đặt bóng về chính giữa sân để giao bóng lại.
 - Nút “Rời sân bóng” để rời trận. Vào phòng chung trước khi tìm trận để gặp người thật.
 
-5) CHẾ ĐỘ ĐẤU SÚNG
+6) CHẾ ĐỘ ĐẤU SÚNG
 - Chế độ này độc lập với sân bóng. Khi nhấn “Đấu súng: Bật”, nhân vật tự trang bị một
   khẩu súng ngắn và súng xuất hiện trên tay ngay. Đi đến súng nằm trên đất, nhấn E hoặc
   nút “Lượm” để đổi sang loại súng khác.
@@ -64,7 +64,7 @@ UTE CAMPUS – BẢN 11 · AVATAR / AIM / SÂN BÓNG + NHẢY
 - Khi tắt đấu súng, súng được cất, mô hình súng ở tay biến mất và hai tay chuyển về tư thế thả tự nhiên.
 - Có sáu nhóm mô hình súng: pistol, SMG, AR, LMG, shotgun và sniper.
 
-6) ĐIỀU KHIỂN
+7) ĐIỀU KHIỂN
 Máy tính:
   WASD hoặc phím mũi tên : Di chuyển
   Shift                  : Chạy
@@ -84,7 +84,7 @@ Máy tính:
   Nút Lượm                : Nhặt súng
   Nút ◉                   : Đổi góc nhìn
 
-7) HÌNH ẢNH 3D
+8) HÌNH ẢNH 3D
 - Bổ sung vật liệu bề mặt có vân nhẹ cho cỏ, nền bê tông, tường và mái.
 - Tăng chi tiết mặt đứng: đường phân tầng, khung cửa, bậu cửa, cột góc, mái che,
   ban công có lan can ở một số khối nhiều tầng, cửa ra vào và thiết bị kỹ thuật trên mái.
@@ -92,7 +92,7 @@ Máy tính:
   sân bóng có vạch giữa, vòng tròn, khu vực cấm địa và hai khung thành có cột, xà ngang, lưới
   cùng quả bóng có mảng ngũ giác tối màu.
 
-8) KẾT NỐI SUPABASE
+9) KẾT NỐI SUPABASE
 - Bản nâng cấp giữ nguyên URL và publishable key hiện có trong social-config.js.
 - Bộ đếm online hợp nhất Presence với RPC roster gần nhất, loại trùng theo ID; RPC định kỳ không còn ghi đè ngược số Presence mới.
 - Luồng vẫn sử dụng Supabase Auth ẩn danh, RPC campus_sync và Supabase Realtime.
@@ -111,8 +111,8 @@ LƯU Ý KỸ THUẬT
   trò chơi phía máy khách. Chưa xác minh trận đấu trực tiếp bằng hai tài khoản trên hai máy;
   cần chạy hai trình duyệt thật sau khi deploy để kiểm tra Presence và Broadcast.
 
-5) GHI CHÚ BẢN 11
-- Sân bóng được thu nhỏ theo tâm mặt bằng để tránh lấn vào dãy phòng/cây; hai khung thành được thu theo chiều ngang.
-- Bóng chỉ được sút khi người chơi đứng gần và chủ động nhấn R hoặc nút Sút; lực sút và ma sát đã giảm để dễ kiểm soát.
-- Bóng bật lại ở hai biên dọc; ở hai biên ngang chỉ được tính bàn khi đi qua miệng khung thành trong thời gian trận đấu chính thức.
-- Đã kiểm tra cú pháp JavaScript, ID HTML không trùng, mô phỏng sút bóng và kiểm thử bóng đi qua khung thành. Kết nối nhiều thiết bị/Supabase và chất lượng hiển thị thực tế vẫn cần kiểm tra sau khi deploy.
+V12 – cập nhật theo góp ý mới:
+- Avatar áo xanh dương theo ảnh tham chiếu, tỷ lệ thấp gọn khoảng 1,58 m; đầu/thân/tay/chân bo tròn, có khớp khuỷu và đầu gối để chuyển động tự nhiên hơn.
+- Sân thu hẹp đồng bộ ở bản 3D và vật lý; dãy mái đỏ trung tâm được mô phỏng 3 tầng.
+- Trận bóng bắt đầu ngay, BOT bù đội khi cần; người chơi khác được ghép trong 60 giây đầu, trận kết thúc sau 90 giây.
+- Kiểm tra ghi bàn theo quỹ đạo cắt mặt phẳng khung thành, chống bỏ sót ở tốc độ cao; cộng tỷ số (ví dụ 1–0), phát bảng điểm/thông báo và đặt bóng đúng tâm sân sau bàn thắng.
