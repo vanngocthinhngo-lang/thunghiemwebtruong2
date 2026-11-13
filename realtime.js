@@ -61,3 +61,57 @@
  net.nameOf=id=>(roster.find(p=>p.id===id)||{}).name||'ai đó';
  window.campusNet=net;
 })();
+
+
+// Ngô Văn Ngọc Thịnh - 2415053122244 - Bổ sung Chat & Bắn súng
+window.addEventListener('DOMContentLoaded', () => {
+    if (typeof supabase !== 'undefined') {
+        const chatChannel = supabase.channel('campus-chat');
+
+        chatChannel.on('broadcast', { event: 'new_message' }, (payload) => {
+            displayMessage(payload.payload.sender, payload.payload.text);
+        }).subscribe();
+
+        const sendBtn = document.getElementById('send-chat');
+        if(sendBtn) {
+            sendBtn.onclick = () => {
+                const input = document.getElementById('chat-message');
+                if (input.value.trim() !== '') {
+                    const msg = input.value;
+                    displayMessage('Tôi', msg); 
+                    
+                    chatChannel.send({
+                        type: 'broadcast',
+                        event: 'new_message',
+                        payload: { sender: 'Sinh viên UTE', text: msg }
+                    });
+                    input.value = '';
+                }
+            };
+        }
+
+        function displayMessage(sender, text) {
+            const history = document.getElementById('chat-history');
+            if(history) {
+                history.innerHTML += `<div><strong style="color:#00ff00;">${sender}:</strong> ${text}</div>`;
+                history.scrollTop = history.scrollHeight;
+            }
+        }
+
+        const actionChannel = supabase.channel('campus-actions');
+
+        actionChannel.on('broadcast', { event: 'shoot' }, (payload) => {
+            if (typeof createBullet === 'function') {
+                createBullet(payload.payload.startX, payload.payload.startY, payload.payload.targetX, payload.payload.targetY);
+            }
+        }).subscribe();
+
+        window.broadcastShoot = function(startX, startY, targetX, targetY) {
+            actionChannel.send({
+                type: 'broadcast',
+                event: 'shoot',
+                payload: { startX, startY, targetX, targetY }
+            });
+        };
+    }
+});

@@ -20,4 +20,21 @@
 <script src="supabase-2.49.8.js"></script><script src="social-config.js"></script><script src="realtime.js"></script><script src="social.js"></script>
 <dialog id="questDialog"><button id="questClose" class="close" aria-label="Đóng khám phá">×</button><div class="eyebrow">HỘ CHIẾU UTE · LƯU TRÊN THIẾT BỊ</div><h2>Mỗi góc trường, một dấu chân.</h2><p>Đi dạo đến gần địa điểm và bấm check-in để sưu tập dấu. Đây là vị trí trong mô hình, không sử dụng GPS.</p><strong id="questProgress">Đã khám phá 0/18 địa điểm</strong><progress id="questBar" max="18" value="0"></progress><div id="badges"><span class="badge">🌱 Bước chân đầu tiên · 1 điểm</span><span class="badge">🧭 Người khám phá · 5 điểm</span><span class="badge">✨ Thông thạo khuôn viên · 12 điểm</span><span class="badge">🏆 Dấu chân UTE · 18 điểm</span></div><button id="checkin" class="primary">Check-in tại đây</button><p id="questStatus" role="status"></p><div class="questActions"><button id="postcard" class="secondary">📷 Tải ảnh góc nhìn</button><button id="sharePlace" class="secondary">↗ Sao chép link mời bạn</button></div><h3>Những điểm đang chờ bạn</h3><div id="questPlaces"><button>○ Cổng phía Cao Thắng</button><button>○ Dãy nhà Tây Bắc</button><button>○ Khối mái xanh phía Tây</button><button>○ Dãy mái đỏ trung tâm</button><button>○ Khối chữ U gần cổng</button><button>○ Khối mái xanh phía Bắc</button><button>○ Khối nối giữa khuôn viên</button><button>○ Dãy mái dài phía Đông Nam</button><button>○ Dãy nhà trong cụm xưởng</button><button>○ Khối mái đỏ phía Đông</button><button>○ Xưởng thực hành · Lý Tự Trọng</button><button>○ Khối nhà phía Nam</button><button>○ Mái che gần cổng</button><button>○ Dãy mái nối giáp sân</button><button>○ Sân bóng</button><button>○ Sân giữa các dãy nhà</button><button>○ Sân vườn phía Cao Thắng</button><button>○ Sân cụm xưởng</button></div><small>Huy hiệu cá nhân được lưu trên trình duyệt này.</small></dialog><script src="explore.js"></script>
 <script src="game.js"></script>
-</body></html>
+
+<div id="multiplayer-ui">
+    <div id="chat-box">
+        <div id="chat-history"></div>
+        <div class="chat-input-wrapper">
+            <input type="text" id="chat-message" placeholder="Nhập tin nhắn...">
+            <button id="send-chat">Gửi</button>
+        </div>
+    </div>
+    
+    <div id="combat-ui" style="display: none;">
+        🔫 Vũ khí: <span id="weapon-name">Không có</span> | Đạn: <span id="ammo-count">0</span>
+    </div>
+    
+    <button id="soccer-btn" style="display: none;">⚽ Vào sân đá bóng</button>
+</div>
+</body>
+</html>
