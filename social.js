@@ -24,7 +24,7 @@
  };
  async function sync(initial=false){if(busy||!active)return;busy=true;const sending=pending;pending=null;
   try{const p=api.position();let {data,error}=await db.rpc('campus_sync',{p_name:profile.name,p_color:profile.color,p_x:p.x,p_z:p.z,p_yaw:p.yaw,p_message:sending});if(error)throw error;
-   if(!active)return;status('Đã kết nối phòng chung');el('onlineBadge').textContent=data.players.length+' người trong phòng';
+   if(!active)return;if(initial&&api.roomSpawn)api.roomSpawn(data.players,data.self);status('Đã kết nối phòng chung');el('onlineBadge').textContent=data.players.length+' người trong phòng';
    window.campusNet?campusNet.roster(db,data.players,data.self,muted):api.peers(data.players.filter(p=>p.id!==data.self&&!muted.has(p.id)));el('people').replaceChildren();
    for(const p of data.players){const b=document.createElement('button');b.textContent=p.name+(p.id===data.self?' (bạn)':muted.has(p.id)?' · Bỏ ẩn':' · Ẩn');b.disabled=p.id===data.self;b.onclick=()=>{muted.has(p.id)?muted.delete(p.id):muted.add(p.id);seen.clear();el('chatMessages').replaceChildren();sync()};el('people').append(b)}
    const log=el('chatMessages'),atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<60;for(const m of data.messages){if(seen.has(m.id)||muted.has(m.sender))continue;seen.add(m.id);const row=document.createElement('div'),name=document.createElement('b'),time=document.createElement('time'),body=document.createElement('span');name.textContent=m.name;name.style.color=m.color;time.textContent=new Date(m.created_at).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});body.textContent=m.body;row.append(name,time,body);el('chatMessages').append(row)}

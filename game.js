@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 'use strict';
 // Mini-game trong khuôn viên: ⚽ đá bóng ở sân bóng + 🔫 súng trên mặt đất (nhặt, bắn, hồi sinh).
 // Tên súng/hình dạng do mình tự đặt (low-poly), lấy cảm hứng theo nhóm súng trong game bắn súng sinh tồn.
@@ -81,7 +80,8 @@
  function onShot(m,mine){
   if(!m||!finite(m.x)||!finite(m.z)||!Array.isArray(m.d)||m.d.length>10||!m.d.every(finite)||!WEAPONS[m.w])return;
   const w=WEAPONS[m.w];
-  for(const th of m.d)tracers.push({a:[m.x,m.z],b:rayEnd(m,th,w.range),t:now()});
+  for(const th of m.d){const end=rayEnd(m,th,w.range);tracers.push({a:[m.x,m.z],b:end,t:now()});if(api.addTracer)api.addTracer(m.x,m.z,end[0],end[1],w.col);}
+  if(api.fireVisual)api.fireVisual(m.w,!!mine,m.from);
   if(mine||!fight||!alive||now()<shield)return;
   const hits=hitCount(m,w);if(!hits)return;
   hp=Math.max(0,hp-hits*w.dmg);say('Bạn trúng đạn! ♥ '+Math.round(hp));
@@ -179,57 +179,19 @@
    if(firing||api.isDown(' ')||api.isDown('f'))fire();
    ballTick();
   }
-  net.setExtra({f:fight?1:0,hp:Math.round(hp),w:weapon?1:0});
+  net.setExtra({f:fight?1:0,hp:Math.round(hp),w:weapon?1:0,weapon:weapon||'',moving:api.moving(),firing:!!firing});
+  const walkingNow=api.mode()==='walk';const arena=$('arenaPanel');if(arena)arena.hidden=!(walkingNow&&fight);const count=$('arenaCount');if(count)count.textContent=(net.live()?net.count():1)+' người trong phòng';const cross=$('crosshair');if(cross)cross.hidden=!(walkingNow&&fight&&!!weapon&&alive);
   updateHud();
  }
- $('fightBtn').onclick=()=>{fight=!fight;firing=false;say(fight?(net.live()?'Chế độ đấu súng BẬT: nhặt súng và bắn nhau!':'Đấu súng BẬT. Vào phòng chung để đấu với bạn bè nhé.'):'Đấu súng TẮT: bạn không bị bắn.')};
+ $('fightBtn').onclick=()=>{fight=!fight;firing=false;say(fight?(net.live()?'Đấu trường đã mở. Nhặt súng và đối đầu với '+Math.max(0,net.count()-1)+' người chơi khác!':'Đấu trường đang mở nhưng bạn chưa vào phòng chung. Hãy vào phòng để gặp người chơi khác.'):'Đấu trường đã tắt. Bạn không nhận sát thương.');};
  $('ballBtn').onclick=()=>{ballOn=!ballOn;say(ballOn?'Vào sân: chạy vào bóng để sút (giữ chạy để sút mạnh)':'Đã rời sân bóng')};
  $('pickBtn').onclick=pick;$('reloadBtn').onclick=reload;
+ $('exitWalk').onclick=()=>{firing=false;api.aerial()};
  const fb=$('fireBtn');fb.onpointerdown=e=>{firing=true;fb.setPointerCapture(e.pointerId)};fb.onpointerup=fb.onpointercancel=()=>{firing=false};
  addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||document.querySelector('dialog[open]'))return;
   const k=e.key.toLowerCase();if(k==='e')pick();else if(k==='r')reload();else if(k==='g')$('fightBtn').click();
  });
  setInterval(tick,33);
- window.campusGame={WEAPONS,spawns,inside,court,ballPos,state:()=>({fight,hp,weapon,ammo,reserve,kills,ball}),_test:{onShot,fire,pick,setFight:v=>{fight=v},setNear:i=>{nearItem=i}}};
+ window.campusGame={WEAPONS,spawns,inside,court,ballPos,state:()=>({fight,hp,weapon,ammo,reserve,kills,ball}),isFighting:()=>fight&&alive&&!!weapon,setFiring:v=>{firing=!!v},renderState:()=>({taken:spawns.map((_,i)=>!!isTaken(i)),ball:{visible:ballOn||now()-ball.t<60000,...(()=>{const b=ballPos(now());return{x:b[0],z:b[1],speed:Math.hypot(ball.vx,ball.vz)}})()}}),_test:{onShot,fire,pick,setFight:v=>{fight=v},setNear:i=>{nearItem=i}}};
 })();
-=======
-// --- 1. SỬA LỖI VỪA CHẠY VỪA BẮN ---
-// Trong vòng lặp render/update của game, tách biệt di chuyển và đạn bay:
-function updateGame() {
-    // Cập nhật di chuyển (không bị if else chặn bởi hành động bắn)
-    if (keys['w']) moveForward();
-    if (keys['s']) moveBackward();
-    if (keys['a']) moveLeft();
-    if (keys['d']) moveRight();
-    
-    // Cập nhật vị trí các viên đạn độc lập
-    updateBullets(); 
-    
-    requestAnimationFrame(updateGame);
-}
-
-// Sự kiện click chuột để bắn
-window.addEventListener('mousedown', () => {
-    fireBullet(); 
-});
-
-
-// --- 2. LÀM VIÊN ĐẠN TRÔNG CHÂN THẬT HƠN (DÀNH CHO THREE.JS) ---
-function fireBullet() {
-    // Dùng CylinderGeometry để tạo hình trụ thon dài thay vì BoxGeometry (khối vuông)
-    const bulletGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8);
-    bulletGeo.rotateX(Math.PI / 2); // Xoay viên đạn hướng tới trước
-    
-    // Dùng MeshBasicMaterial màu cam sáng (0xffaa00) để đạn luôn sáng không bị tối do thiếu đèn
-    const bulletMat = new THREE.MeshBasicMaterial({ 
-        color: 0xffaa00 
-    });
-    
-    const bullet = new THREE.Mesh(bulletGeo, bulletMat);
-    
-    // --- Code cũ của bạn bên dưới (set position, quaternion, add vào scene...) ---
-    // bullet.position.copy(player.position);
-    // ...
-}
->>>>>>> ef85183599866f147bcf040f8b2e9d84eac21d6b
