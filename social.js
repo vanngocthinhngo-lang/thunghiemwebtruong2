@@ -6,6 +6,19 @@
  el('nickname').value=profile.name;el('shirt').value=profile.color;api.color(profile.color);
  let db=null,active=false,busy=false,timer=null,pending=null,lastSent=0,muted=new Set(),seen=new Set();
  const status=t=>el('socialStatus').textContent=t;
+ // A single renderer prevents the 1.5-second RPC refresh from overwriting fresh Presence data.
+ function renderOnline(connected=!!window.campusNet?.live?.()){
+  const count=window.campusNet?.count?.()||1;
+  el('onlineBadge').textContent=connected?count+' người đang online':(count>1?count+' người trong phòng · Realtime đang kết nối':'Đang đồng bộ người chơi…');
+ }
+ if(window.campusNet?.onPresence) window.campusNet.onPresence((members,connected)=>{
+  if(!active)return;
+  renderOnline(connected);
+  if(members.length){
+   const box=el('people');box.replaceChildren();
+   members.forEach(p=>{const b=document.createElement('button');b.textContent=p.name+(p.id===window.campusNet.self()?' (bạn)':muted.has(p.id)?' · Bỏ ẩn':' · Ẩn');b.disabled=p.id===window.campusNet.self();b.onclick=()=>{muted.has(p.id)?muted.delete(p.id):muted.add(p.id);seen.clear();el('chatMessages').replaceChildren();sync()};box.append(b)});
+  }
+ });
  function remember(){profile={name:el('nickname').value.trim().slice(0,24),color:el('shirt').value};save('ute-profile',JSON.stringify(profile));api.color(profile.color)}
  el('shirt').oninput=()=>{api.color(el('shirt').value)};
  el('saveLook').onclick=()=>{remember();leave();el('socialDialog').close();api.walk()};
@@ -24,13 +37,13 @@
  };
  async function sync(initial=false){if(busy||!active)return;busy=true;const sending=pending;pending=null;
   try{const p=api.position();let {data,error}=await db.rpc('campus_sync',{p_name:profile.name,p_color:profile.color,p_x:p.x,p_z:p.z,p_yaw:p.yaw,p_message:sending});if(error)throw error;
-   if(!active)return;if(initial&&api.roomSpawn)api.roomSpawn(data.players,data.self);status('Đã kết nối phòng chung');el('onlineBadge').textContent=data.players.length+' người trong phòng';
-   window.campusNet?campusNet.roster(db,data.players,data.self,muted):api.peers(data.players.filter(p=>p.id!==data.self&&!muted.has(p.id)));el('people').replaceChildren();
+   if(!active)return;if(initial&&api.roomSpawn)api.roomSpawn(data.players,data.self);status('Đã kết nối phòng chung');
+   window.campusNet?campusNet.roster(db,data.players,data.self,muted,profile):api.peers(data.players.filter(p=>p.id!==data.self&&!muted.has(p.id)));renderOnline(!!window.campusNet?.live?.());el('people').replaceChildren();
    for(const p of data.players){const b=document.createElement('button');b.textContent=p.name+(p.id===data.self?' (bạn)':muted.has(p.id)?' · Bỏ ẩn':' · Ẩn');b.disabled=p.id===data.self;b.onclick=()=>{muted.has(p.id)?muted.delete(p.id):muted.add(p.id);seen.clear();el('chatMessages').replaceChildren();sync()};el('people').append(b)}
    const log=el('chatMessages'),atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<60;for(const m of data.messages){if(seen.has(m.id)||muted.has(m.sender))continue;seen.add(m.id);const row=document.createElement('div'),name=document.createElement('b'),time=document.createElement('time'),body=document.createElement('span');name.textContent=m.name;name.style.color=m.color;time.textContent=new Date(m.created_at).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});body.textContent=m.body;row.append(name,time,body);el('chatMessages').append(row)}
    while(el('chatMessages').children.length>80)el('chatMessages').firstChild.remove();seen=new Set(data.messages.map(m=>m.id));if(sending||initial||atBottom)el('chatMessages').scrollTop=el('chatMessages').scrollHeight;
    el('chatState').textContent='Phòng chung · Tin nhắn lưu tối đa 24 giờ';
-  }catch(e){if(sending&&!el('chatInput').value)el('chatInput').value=sending;if(initial){active=false;throw e}api.peers([]);el('onlineBadge').textContent='Đang kết nối lại…';el('chatState').textContent=sending?'Gửi chưa thành công. Bạn hãy gửi lại.':'Mất kết nối, đang thử lại…';}
+  }catch(e){if(sending&&!el('chatInput').value)el('chatInput').value=sending;if(initial){active=false;throw e}api.peers([]);renderOnline(false);el('chatState').textContent=sending?'Gửi chưa thành công. Bạn hãy gửi lại.':'Mất kết nối, đang thử lại…';}
   finally{busy=false}
  }
  el('chatForm').onsubmit=e=>{e.preventDefault();if(!active||pending||Date.now()-lastSent<3200)return;const txt=el('chatInput').value.trim();if(!txt)return;pending=txt.slice(0,240);el('chatInput').value='';lastSent=Date.now();el('chatState').textContent='Đang gửi…'};

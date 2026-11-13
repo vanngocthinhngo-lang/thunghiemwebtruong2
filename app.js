@@ -85,7 +85,7 @@ window.campusBridge={
  moving:()=>!!(Math.abs(move.x)+Math.abs(move.y)>0.08||keys.w||keys.a||keys.s||keys.d||keys.ArrowUp||keys.ArrowDown||keys.ArrowLeft||keys.ArrowRight),lookPitch:()=>walkPitch,firstPerson:()=>firstPerson,currentColor:()=>myColor,
  gfx:{box,ground,lineGround,project,world:p=>world(p),clear},
  color:c=>{if(/^#[0-9a-f]{6}$/i.test(c))myColor=c},
- position:()=>({x:player.x,z:player.z,yaw:walkYaw}),
+ position:()=>({x:player.x,z:player.z,yaw:walkYaw}),setPosition:(x,z,yaw=walkYaw)=>{if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<190&&Math.abs(z)<190){player={x,z};if(Number.isFinite(yaw))walkYaw=yaw;}},
  walk:()=>setMode('walk'),aerial:()=>setMode('aerial'),gate:()=>{player={x:spawn[0],z:spawn[1]};walkYaw=-1.15;walkPitch=.08;setMode('walk')},
  roomSpawn:(players,self)=>{const peers=(players||[]).filter(p=>p&&p.id!==self&&Number.isFinite(p.x)&&Number.isFinite(p.z));let hash=0;for(const ch of String(self||'ute'))hash=(hash*31+ch.charCodeAt(0))>>>0;for(let n=0;n<48;n++){const slot=(hash+n)%48,ring=Math.floor(slot/8),a=(slot%8)*Math.PI/4,r=5.2+ring*2.6,x=spawn[0]+Math.cos(a)*r,z=spawn[1]+Math.sin(a)*r;if(!clearPlayer(x,z))continue;if(peers.some(q=>Math.hypot(q.x-x,q.z-z)<2.0))continue;player={x,z};walkYaw=Math.atan2(x-spawn[0],z-spawn[1]);setMode('walk');return true;}player={x:spawn[0]+Math.cos(hash)*8,z:spawn[1]+Math.sin(hash)*8};walkYaw=-1.15;setMode('walk');return true;},
  peers:ps=>{remotePlayers=ps.slice(0,40).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)&&Number.isFinite(p.yaw)&&Math.abs(p.x)<=190&&Math.abs(p.z)<=190&&/^#[0-9a-f]{6}$/i.test(p.color)).map(p=>({...p,name:String(p.name).slice(0,24)}))},getPeers:()=>remotePlayers,

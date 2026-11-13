@@ -1,40 +1,71 @@
-UTE CAMPUS – BẢN NÂNG CẤP 3D & ĐẤU TRƯỜNG NHIỀU NGƯỜI
-====================================================
+UTE CAMPUS – BẢN 9 · 3D MULTIPLAYER + SÂN BÓNG 90 GIÂY
+===========================================================
 
 1) CẬP NHẬT MÃ NGUỒN
 - Giải nén ZIP.
 - Sao lưu thư mục dự án hiện tại trước khi chép đè.
-- Chép các file trong ZIP vào thư mục gốc dự án, giữ nguyên cấu trúc file.
-- Không đổi tên các file: index.html, app.js, game.js, realtime.js, social.js,
+- Chép tất cả file trong ZIP vào thư mục gốc dự án, giữ nguyên cấu trúc.
+- Không đổi tên index.html, app.js, game.js, realtime.js, social.js,
   social-config.js, campus-data.js, style.css và walk3d.js.
 
 2) CHẠY / DEPLOY
 - Mở dự án bằng Live Server hoặc deploy lên Vercel như hiện tại.
-- Chế độ đi dạo 3D tải Three.js r160 từ CDN (jsDelivr, có CDN dự phòng cdnjs),
-  vì vậy trình duyệt cần có Internet khi tải trang lần đầu.
+- Đi dạo 3D dùng Three.js r160 từ CDN jsDelivr, có CDN cdnjs dự phòng;
+  trình duyệt cần Internet khi mở trang.
 - Sau khi deploy, mở trang và nhấn Ctrl + F5 để tải lại mã mới.
-- Nếu dùng Vercel: git add .
-                    git commit -m "Upgrade campus 3D multiplayer arena"
-                    git push
+- Nếu dùng Vercel:
+    git add .
+    git commit -m "Upgrade UTE campus 3D football multiplayer"
+    git push
 
-3) CÁCH CHƠI NHIỀU NGƯỜI
-- Mỗi người mở cùng một đường dẫn website.
+3) PHÒNG CHUNG VÀ DANH SÁCH NGƯỜI ONLINE
+- Mỗi người mở cùng đường dẫn website.
 - Chọn “Vào phòng chung”, nhập biệt danh và nhấn “Vào phòng chung”.
-- Mọi người đang dùng cùng cấu hình Supabase sẽ xuất hiện trong cùng phòng UTE.
-- Chuyển sang “Đi dạo”, bật “Đấu trường”, tiến lại gần vũ khí trên mặt đất và nhấn E
-  hoặc nút “Lượm”. Khi đã cầm súng, dùng chuột trái / nút Bắn để bắn người chơi khác.
-- Người bị bắn phải bật Đấu trường mới nhận sát thương. Hạ gục sẽ được cộng điểm.
+- Bản mới dùng Supabase Realtime Presence để xác định số trình duyệt đang online,
+  Broadcast để đồng bộ vị trí, hướng, trạng thái di chuyển, vũ khí và trạng thái tìm trận.
+- Trong chế độ đi dạo luôn có bộ đếm người online ở góc trên phải; khi mở trận, số online
+  và số người đang tham gia trận xuất hiện trong bảng UTE ARENA.
+- Danh sách người chơi vẫn ghép với RPC campus_sync để lấy hồ sơ / vị trí ban đầu;
+  Presence bổ sung người đang online nếu danh sách RPC trả về chậm.
+- Nếu số người không cập nhật: kiểm tra Anonymous Sign-in, Realtime Presence/Broadcast,
+  RPC campus_sync và URL/key trong social-config.js.
+- Cách thử 2 người: mở website ở hai trình duyệt / hai máy khác nhau, dùng hai biệt danh,
+  cả hai cùng “Vào phòng chung”. Chờ nhãn online lên 2 người; sau đó mỗi người tới sân
+  và bấm “Tìm trận bóng”. Số online là người đang kết nối; số trong trận chỉ tính người đã
+  bấm tham gia. Người thứ ba tham gia sẽ khiến BOT tự bù vào đội còn thiếu.
 
-4) ĐIỀU KHIỂN
+4) CHẾ ĐỘ SÂN BÓNG
+- Đi đến sân bóng, nhấn “Tìm trận bóng”.
+- Mỗi trận dài 90 giây; bảng tỷ số và đồng hồ hiển thị ở phía trên màn hình.
+- Khi số người tham gia là số lẻ (1, 3, 5, 7 hoặc 9), BOT UTE tự vào đội đang thiếu
+  một người để hai bên cân bằng; khi đủ số chẵn, BOT rời sân.
+- Sảnh ghép người mở tối đa 60 giây; trong thời gian đó người chơi có thể đá thử với BOT.
+  Khi hết 60 giây, trận chính thức bắt đầu và đồng hồ thi đấu 90 giây mới chạy. Người đến
+  sau khi trận chính thức bắt đầu cần chờ trận kế tiếp.
+- Tối đa 10 người tham gia trận (tính cả BOT nếu đang bù đội), tối đa 5 đấu 5.
+  Danh sách người thật được sắp xếp ổn định; BOT tự lấp vị trí còn thiếu để cân bằng đội.
+- Bóng bị giới hạn trong biên sân: chạm đường biên ngang/dọc thì bật lại; đi qua khoảng
+  giữa hai cột khung thành thì tính bàn và đưa bóng về giữa sân.
+- Nút “Rời sân bóng” để rời trận. Vào phòng chung trước khi tìm trận để gặp người thật.
+
+5) CHẾ ĐỘ ĐẤU SÚNG
+- Chế độ này độc lập với sân bóng. Khi nhấn “Đấu súng: Bật”, nhân vật tự trang bị một
+  khẩu súng ngắn và súng xuất hiện trên tay ngay. Đi đến súng nằm trên đất, nhấn E hoặc
+  nút “Lượm” để đổi sang loại súng khác.
+- Chuột trái / nút Bắn để bắn; R / nút ↻ để nạp đạn; G bật/tắt chế độ đấu súng.
+- Khi tắt đấu súng, súng được cất, mô hình súng ở tay biến mất và hai tay chuyển về tư thế thả tự nhiên.
+- Có sáu nhóm mô hình súng: pistol, SMG, AR, LMG, shotgun và sniper.
+
+6) ĐIỀU KHIỂN
 Máy tính:
   WASD hoặc phím mũi tên : Di chuyển
   Shift                  : Chạy
   Kéo chuột               : Xoay hướng nhìn
-  Chuột trái              : Bắn (khi đã bật Đấu trường và có súng)
+  Chuột trái              : Bắn (khi đấu súng bật và đã nhặt súng)
   E                       : Nhặt súng
   R                       : Nạp đạn
   Space                   : Bắn
-  G                       : Bật / tắt Đấu trường
+  G                       : Bật / tắt đấu súng
   Nút ◉                   : Đổi góc nhìn thứ nhất / thứ ba
 
 Điện thoại:
@@ -45,30 +76,29 @@ Máy tính:
   Nút Lượm                : Nhặt súng
   Nút ◉                   : Đổi góc nhìn
 
-5) KẾT NỐI SUPABASE
+7) HÌNH ẢNH 3D
+- Bổ sung vật liệu bề mặt có vân nhẹ cho cỏ, nền bê tông, tường và mái.
+- Tăng chi tiết mặt đứng: đường phân tầng, khung cửa, bậu cửa, cột góc, mái che,
+  ban công có lan can ở một số khối nhiều tầng, cửa ra vào và thiết bị kỹ thuật trên mái.
+- Cây tán rộng dạng low-poly, đèn lối đi, bóng đổ mềm, bề mặt tường/mái/bê tông có vân;
+  sân bóng có vạch giữa, vòng tròn, khu vực cấm địa và hai khung thành có cột, xà ngang, lưới
+  cùng quả bóng có mảng ngũ giác tối màu.
+
+8) KẾT NỐI SUPABASE
 - Bản nâng cấp giữ nguyên URL và publishable key hiện có trong social-config.js.
-- Luồng phòng chung vẫn sử dụng Supabase Auth ẩn danh, RPC campus_sync và kênh
-  Supabase Realtime Broadcast đã có trong dự án. Không xóa RPC / policy / bảng hiện tại.
-- Nếu người chơi không thấy nhau, kiểm tra Anonymous Sign-in đã bật, RPC campus_sync
-  còn hoạt động, Realtime Broadcast được phép và các trình duyệt cùng vào đúng URL.
-- Không đưa service_role key lên trình duyệt.
+- Bộ đếm online hợp nhất Presence với RPC roster gần nhất, loại trùng theo ID; RPC định kỳ không còn ghi đè ngược số Presence mới.
+- Luồng vẫn sử dụng Supabase Auth ẩn danh, RPC campus_sync và Supabase Realtime.
+- Cần bật Anonymous Sign-in và Realtime trên project Supabase; không xóa RPC / policy / bảng
+  hiện tại. Không đưa service_role key lên trình duyệt.
 
-6) NHỮNG GÌ ĐÃ ĐƯỢC NÂNG CẤP
-- Chế độ đi dạo dựng bằng WebGL / Three.js, có phối cảnh, ánh sáng, bóng đổ,
-  mặt sân, đường, khối nhà, mái, cửa sổ và cây xanh 3D.
-- Nhân vật có tỷ lệ người rõ hơn, đầu, thân, tay, chân, giày và hoạt ảnh bước đi.
-- Sáu nhóm súng có mô hình riêng; súng được gắn vào tay ở góc nhìn thứ ba và
-  hiển thị trước camera ở góc nhìn thứ nhất.
-- Bổ sung tâm ngắm, tia đạn 3D, lóe đầu nòng và độ giật khi bắn.
-- Đồng bộ loại súng / trạng thái di chuyển của người chơi từ xa qua Realtime.
-- Sửa điều kiện bàn phím để WASD vẫn hoạt động khi một nút giao diện đang được focus.
-- Có va chạm nhân vật với khối nhà, điều khiển chuột / joystick và nút thoát chế độ đi dạo.
-- Nếu gói dự án không có ảnh assets/ute-satellite.jpg, tab ảnh vệ tinh sẽ hiển thị
-  sơ đồ khuôn viên thay thế thay vì bị trống.
-
-LƯU Ý
-- Mô hình nhân vật hiện là nhân vật 3D low-poly được dựng bằng hình học, không phải
-  người photorealistic. Muốn giống người thật hơn nữa cần thêm model GLB/GLTF có rig,
-  texture và animation (đi/chạy/nhắm/bắn) có bản quyền sử dụng phù hợp.
-- Chế độ nhiều người cần kết nối Internet và Supabase hiện có. Nếu backend Supabase
-  đã bị thay đổi hoặc RPC campus_sync bị xóa thì chỉ sửa file front-end sẽ chưa đủ.
+LƯU Ý KỸ THUẬT
+- Nhân vật và công trình là mô hình 3D low-poly có vật liệu và chi tiết tăng cường,
+  chưa phải tài sản photorealistic. Để gần người thật hơn cần dùng model GLB/GLTF có rig,
+  texture PBR và animation đi/chạy/đá bóng/nhắm bắn có quyền sử dụng phù hợp.
+- Đồng bộ trận đấu hiện dùng Realtime Broadcast và máy khách chọn người điều phối theo ID;
+  phù hợp bản demo / đồ án, chưa phải kiến trúc thi đấu chống gian lận. Sản phẩm công khai
+  cần chuyển điểm số, va chạm, xác thực bàn thắng và thời gian trận sang server-authoritative
+  (Edge Function / game server) trước khi phát hành.
+- Kết quả kiểm tra trong gói này gồm kiểm tra cú pháp JavaScript và kiểm thử mô phỏng logic
+  trò chơi phía máy khách. Chưa xác minh trận đấu trực tiếp bằng hai tài khoản trên hai máy;
+  cần chạy hai trình duyệt thật sau khi deploy để kiểm tra Presence và Broadcast.
