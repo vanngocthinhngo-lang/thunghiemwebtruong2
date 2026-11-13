@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 'use strict';
 // Kênh Supabase Realtime (broadcast): đồng bộ vị trí ~8 lần/giây + sự kiện game (bắn, đá bóng...).
 // Không cần tạo bảng hay SQL mới. DB (campus_sync) vẫn lo chat và danh sách người trong phòng.
@@ -61,3 +62,26 @@
  net.nameOf=id=>(roster.find(p=>p.id===id)||{}).name||'ai đó';
  window.campusNet=net;
 })();
+=======
+// --- THÊM HOẶC SỬA PHẦN NÀY ĐỂ FIX LỖI KHÔNG GỬI ĐƯỢC CHAT ---
+// (Lưu ý: Thay đổi ID 'chat-input' và 'btn-send-chat' cho đúng với HTML của bạn)
+const chatInput = document.getElementById('chat-input'); 
+const sendBtn = document.getElementById('btn-send-chat'); 
+
+if (sendBtn) {
+    sendBtn.addEventListener('click', () => {
+        sendMessage(); // Hàm gửi tin nhắn của bạn
+    });
+}
+
+if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); 
+            sendMessage(); // Hàm gửi tin nhắn của bạn
+        }
+    });
+}
+
+// (Giữ nguyên các logic kết nối Supabase/Socket cũ của bạn)
+>>>>>>> ef85183599866f147bcf040f8b2e9d84eac21d6b
