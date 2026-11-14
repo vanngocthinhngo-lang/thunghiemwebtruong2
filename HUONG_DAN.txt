@@ -1,4 +1,4 @@
-UTE CAMPUS – BẢN 12 · AVATAR / GHI BÀN / SÂN BÓNG + NHẢY
+UTE CAMPUS – BẢN 13 · AVATAR / SÂN BÓNG / ĐIỀU KHIỂN
 ===========================================================
 
 1) CẬP NHẬT MÃ NGUỒN
@@ -66,9 +66,11 @@ UTE CAMPUS – BẢN 12 · AVATAR / GHI BÀN / SÂN BÓNG + NHẢY
 
 7) ĐIỀU KHIỂN
 Máy tính:
-  WASD hoặc phím mũi tên : Di chuyển
+  W / S                  : Tiến / lùi
+  A / D hoặc ← / →        : Xoay người và camera trái / phải
+  Z / C                  : Đi ngang (nếu cần)
   Shift                  : Chạy
-  Kéo chuột               : Xoay hướng nhìn
+  Kéo chuột               : Nhìn tự do (không bắt buộc)
   Chuột trái              : Bắn (khi đấu súng bật và đã nhặt súng)
   E                       : Nhặt súng
   R                       : Nạp đạn
@@ -89,7 +91,7 @@ Máy tính:
 - Tăng chi tiết mặt đứng: đường phân tầng, khung cửa, bậu cửa, cột góc, mái che,
   ban công có lan can ở một số khối nhiều tầng, cửa ra vào và thiết bị kỹ thuật trên mái.
 - Cây tán rộng dạng low-poly, đèn lối đi, bóng đổ mềm, bề mặt tường/mái/bê tông có vân;
-  sân bóng có vạch giữa, vòng tròn, khu vực cấm địa và hai khung thành có cột, xà ngang, lưới
+  sân bóng có đường giữa sân vuông góc với trục hai khung thành, vòng tròn và khu vực cấm địa và hai khung thành có cột, xà ngang, lưới
   cùng quả bóng có mảng ngũ giác tối màu.
 
 9) KẾT NỐI SUPABASE
@@ -111,8 +113,14 @@ LƯU Ý KỸ THUẬT
   trò chơi phía máy khách. Chưa xác minh trận đấu trực tiếp bằng hai tài khoản trên hai máy;
   cần chạy hai trình duyệt thật sau khi deploy để kiểm tra Presence và Broadcast.
 
-V12 – cập nhật theo góp ý mới:
-- Avatar áo xanh dương theo ảnh tham chiếu, tỷ lệ thấp gọn khoảng 1,58 m; đầu/thân/tay/chân bo tròn, có khớp khuỷu và đầu gối để chuyển động tự nhiên hơn.
+V12 – cập nhật theo góp ý trước đó:
+- Avatar áo xanh dương theo ảnh tham chiếu, tỷ lệ thấp gọn khoảng 1,55–1,58 m; đầu/thân/tay/chân bo tròn hơn, vai và cẳng tay đầy đặn hơn, có mắt/mày và khớp khuỷu/gối. Mặc định màu áo xanh dương.
 - Sân thu hẹp đồng bộ ở bản 3D và vật lý; dãy mái đỏ trung tâm được mô phỏng 3 tầng.
 - Trận bóng bắt đầu ngay, BOT bù đội khi cần; người chơi khác được ghép trong 60 giây đầu, trận kết thúc sau 90 giây.
 - Kiểm tra ghi bàn theo quỹ đạo cắt mặt phẳng khung thành, chống bỏ sót ở tốc độ cao; cộng tỷ số (ví dụ 1–0), phát bảng điểm/thông báo và đặt bóng đúng tâm sân sau bàn thắng.
+
+V13 – chỉnh theo ảnh người dùng:
+- Chuyển avatar mặc định về áo xanh dương, đầu tròn và thân/tay bo tròn, dáng thấp gọn gần 1,56 m.
+- Sửa vạch giữa sân: đường giữa chạy ngang sân và vuông góc với trục hai khung thành; trước đó nhầm nối hai tâm gôn tạo một đường trắng dài lệch.
+- Tăng khung thành lên khoảng 5,8 m rộng × 2,25 m cao; vùng ghi bàn vật lý mở rộng đồng bộ.
+- A/D hoặc phím mũi tên trái/phải xoay người và camera theo hướng; W/S tiến lùi; Z/C có thể đi ngang; không cần dùng chuột để quay trái/phải. Joystick ngang trên điện thoại cũng xoay hướng.

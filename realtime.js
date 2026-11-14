@@ -6,7 +6,7 @@
   const handlers = {}, peers = new Map(), presenceHandlers = new Set();
   const finite = Number.isFinite, clamp = (v, m) => Math.max(-m, Math.min(m, v));
   let ch = null, db = null, selfId = null, roster = [], rosterAt = 0, muted = new Set(), live = false;
-  let extra = {}, raf = 0, lastSend = 0, lastSig = '', lastFrame = 0, presence = [], profile = { name: 'Người chơi', color: '#267c65' };
+  let extra = {}, raf = 0, lastSend = 0, lastSig = '', lastFrame = 0, presence = [], profile = { name: 'Người chơi', color: '#2864cf' };
   const net = { decorate: null };
 
   function notifyPresence() {
@@ -16,7 +16,7 @@
       (Array.isArray(entries) ? entries : []).forEach(meta => {
         const id = String(meta?.user_id || key || '');
         if (!id || seen.has(id)) return;
-        seen.set(id, { id, name: String(meta?.name || 'Người chơi').slice(0, 24), color: /^#[0-9a-f]{6}$/i.test(meta?.color || '') ? meta.color : '#267c65' });
+        seen.set(id, { id, name: String(meta?.name || 'Người chơi').slice(0, 24), color: /^#[0-9a-f]{6}$/i.test(meta?.color || '') ? meta.color : '#2864cf' });
       });
     });
     // Presence may take a moment to sync; retain the latest database roster during that window.
@@ -117,7 +117,7 @@
 
   net.roster = (client, players, self, mutedSet, me) => {
     roster = Array.isArray(players) ? players : []; selfId = self; muted = mutedSet || new Set(); rosterAt = Date.now();
-    if (me) profile = { name: String(me.name || 'Người chơi').slice(0, 24), color: /^#[0-9a-f]{6}$/i.test(me.color || '') ? me.color : '#267c65' };
+    if (me) profile = { name: String(me.name || 'Người chơi').slice(0, 24), color: /^#[0-9a-f]{6}$/i.test(me.color || '') ? me.color : '#2864cf' };
     start(client);
     notifyPresence();
   };

@@ -2,7 +2,7 @@
 (()=>{
  const el=id=>document.getElementById(id),api=window.campusBridge;
  const safeRead=k=>{try{return localStorage.getItem(k)}catch{return null}},save=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
- let profile;try{profile=JSON.parse(safeRead('ute-profile'))}catch{}profile=profile||{name:'',color:'#267c65'};
+ let profile;try{profile=JSON.parse(safeRead('ute-profile'))}catch{}profile=profile||{name:'',color:'#2864cf'};if(String(profile.color||'').toLowerCase()==='#267c65')profile.color='#2864cf';
  el('nickname').value=profile.name;el('shirt').value=profile.color;api.color(profile.color);
  let db=null,active=false,busy=false,timer=null,pending=null,lastSent=0,muted=new Set(),seen=new Set();
  const status=t=>el('socialStatus').textContent=t;

@@ -24,7 +24,7 @@
  const court=shrink([[405,450],[603,340],[703,480],[482,589]].map(p=>g.world(p)),.54),courtWide=grow(court,1.045),center=cen(court);
  const goalA=mid(court[3],court[0]),goalB=mid(court[1],court[2]),pitchCenter=mid(goalA,goalB);
  const longAxis=norm([goalB[0]-goalA[0],goalB[1]-goalA[1]]),shortAxis=[-longAxis[1],longAxis[0]];
- const halfLength=Math.hypot(goalB[0]-goalA[0],goalB[1]-goalA[1])/2,halfWidth=Math.hypot(court[0][0]-court[3][0],court[0][1]-court[3][1])/2,goalHalf=2.18;
+ const halfLength=Math.hypot(goalB[0]-goalA[0],goalB[1]-goalA[1])/2,halfWidth=Math.hypot(court[0][0]-court[3][0],court[0][1]-court[3][1])/2,goalHalf=2.8;
  const toField=(x,z)=>[(x-pitchCenter[0])*longAxis[0]+(z-pitchCenter[1])*longAxis[1],(x-pitchCenter[0])*shortAxis[0]+(z-pitchCenter[1])*shortAxis[1]];
  const fromField=(u,v)=>[pitchCenter[0]+longAxis[0]*u+shortAxis[0]*v,pitchCenter[1]+longAxis[1]*u+shortAxis[1]*v];
  const safeC=g.world([525,803]),inSafe=(x,z)=>Math.hypot(x-safeC[0],z-safeC[1])<SAFE_R;

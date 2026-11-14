@@ -125,19 +125,24 @@
   const halfWidth = new THREE.Vector2(court[0][0]-court[3][0],court[0][1]-court[3][1]).length()/2;
   const pitchPoint = (u,v) => [pitchCenter[0]+longAxis.x*u+shortAxis.x*v,pitchCenter[1]+longAxis.y*u+shortAxis.y*v];
   const centerCircle = addMesh(new THREE.RingGeometry(2.05,2.16,64), new THREE.MeshBasicMaterial({color:0xecefe1,side:THREE.DoubleSide}), scene, pitchCenter[0], .085, pitchCenter[1]); centerCircle.rotation.x=-Math.PI/2; centerCircle.castShadow=false;
+  // The halfway line must run across the width of the pitch (perpendicular to the goal-to-goal axis).
+  // The old version joined the two goal centres, creating a long diagonal-looking stripe.
+  const halfwayA=[(court[0][0]+court[1][0])/2,(court[0][1]+court[1][1])/2];
+  const halfwayB=[(court[3][0]+court[2][0])/2,(court[3][1]+court[2][1])/2];
+  lineXZ(halfwayA,halfwayB,.11,.085,materials.white);
   [-1,1].forEach(side=>{
     const u=side*(halfLength-7.2), a=pitchPoint(u,-halfWidth*.53), b=pitchPoint(u,halfWidth*.53);
     lineXZ(a,b,.09,.085,materials.white);
     const boxA=pitchPoint(side*(halfLength-13),-halfWidth*.53),boxB=pitchPoint(side*halfLength,-halfWidth*.53),boxC=pitchPoint(side*halfLength,halfWidth*.53),boxD=pitchPoint(side*(halfLength-13),halfWidth*.53);
     [[boxA,boxB],[boxB,boxC],[boxC,boxD]].forEach(v=>lineXZ(v[0],v[1],.09,.085,materials.white));
-    const gCenter=pitchPoint(side*halfLength,0), outward=[longAxis.x*side,longAxis.y*side], goalWidth=4.5, goalHeight=1.9, depth=1.25;
+    const gCenter=pitchPoint(side*halfLength,0), outward=[longAxis.x*side,longAxis.y*side], goalWidth=5.8, goalHeight=2.25, depth=1.65;
     const postMaterial=mat(0xf4f4e9,.34,.12), postA=[gCenter[0]-shortAxis.x*goalWidth/2,gCenter[1]-shortAxis.y*goalWidth/2], postB=[gCenter[0]+shortAxis.x*goalWidth/2,gCenter[1]+shortAxis.y*goalWidth/2];
-    [postA,postB].forEach(pos=>addMesh(new THREE.CylinderGeometry(.095,.11,goalHeight,12),postMaterial,scene,pos[0],goalHeight/2+.08,pos[1]));
-    const bar=addMesh(new THREE.CylinderGeometry(.095,.095,goalWidth,12),postMaterial,scene,gCenter[0],goalHeight+.08,gCenter[1]); bar.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(shortAxis.x,0,shortAxis.y).normalize());
+    [postA,postB].forEach(pos=>addMesh(new THREE.CylinderGeometry(.12,.13,goalHeight,14),postMaterial,scene,pos[0],goalHeight/2+.08,pos[1]));
+    const bar=addMesh(new THREE.CylinderGeometry(.12,.12,goalWidth,14),postMaterial,scene,gCenter[0],goalHeight+.08,gCenter[1]); bar.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(shortAxis.x,0,shortAxis.y).normalize());
     const back=[gCenter[0]+outward[0]*depth,gCenter[1]+outward[1]*depth];
     const netMaterial=new THREE.MeshBasicMaterial({color:0xe6ede4,wireframe:true,transparent:true,opacity:.34,side:THREE.DoubleSide});
     const netPlane=addMesh(new THREE.PlaneGeometry(goalWidth,goalHeight,12,7),netMaterial,scene,back[0],goalHeight/2+.08,back[1]); netPlane.rotation.y=Math.atan2(outward[0],outward[1]); netPlane.castShadow=false;
-    [-1,1].forEach(sideV=>{const x1=gCenter[0]+shortAxis.x*sideV*goalWidth/2,z1=gCenter[1]+shortAxis.y*sideV*goalWidth/2;const x2=x1+outward[0]*depth,z2=z1+outward[1]*depth;lineXZ([x1,z1],[x2,z2],.055,.10,postMaterial);});
+    [-1,1].forEach(sideV=>{const x1=gCenter[0]+shortAxis.x*sideV*goalWidth/2,z1=gCenter[1]+shortAxis.y*sideV*goalWidth/2;const x2=x1+outward[0]*depth,z2=z1+outward[1]*depth;lineXZ([x1,z1],[x2,z2],.075,.10,postMaterial);});
   });
 
   const colorFromHex = h => new THREE.Color(h || '#e5e1d3');
@@ -297,36 +302,37 @@
     const root = new THREE.Group();
     // A compact, friendly campus avatar matched to the user's blue-shirt reference: approximately 1.58 m tall.
     root.scale.setScalar(.90);
-    const shirt = mat(color || 0x267c65, .68, .015), pants = mat(0x273b4d, .86), skin = materials.skin;
-    const torso = addMesh(new THREE.CapsuleGeometry(.245, .36, 5, 14), shirt, root, 0, 1.02, 0);
-    torso.scale.set(1.02, 1.0, .88);
-    addMesh(new THREE.SphereGeometry(.205, 14, 10), shirt, root, 0, .77, .015).scale.set(1.0,.72,.88);
-    // Neck and slightly larger head, matching the rounded avatar reference.
-    addMesh(new THREE.CylinderGeometry(.068, .078, .13, 12), skin, root, 0, 1.34, 0);
-    const head = new THREE.Group(); head.position.set(0, 1.51, 0); root.add(head);
-    addMesh(new THREE.SphereGeometry(.185, 20, 16), skin, head, 0, 0, 0).scale.set(1,1.06,.94);
-    const hair = addMesh(new THREE.SphereGeometry(.193, 18, 12, 0, Math.PI * 2, 0, Math.PI * .56), mat(0x302b27), head, 0, .045, .01);
+    const shirt = mat(color || 0x2864cf, .68, .015), pants = mat(0x273b4d, .86), skin = mat(0xd6a17e, .88);
+    // Rounded, compact proportions modelled after the blue-shirt avatar reference.
+    const torso = addMesh(new THREE.CapsuleGeometry(.265, .29, 6, 16), shirt, root, 0, .99, 0);
+    torso.scale.set(1.16, 1.02, .94);
+    addMesh(new THREE.SphereGeometry(.225, 16, 12), shirt, root, 0, .765, .008).scale.set(1.12,.72,.94);
+    // Short neck and a rounder head; keep overall avatar height close to 1.55 m.
+    addMesh(new THREE.CylinderGeometry(.075, .082, .12, 14), skin, root, 0, 1.315, 0);
+    const head = new THREE.Group(); head.position.set(0, 1.47, 0); root.add(head);
+    addMesh(new THREE.SphereGeometry(.207, 24, 18), skin, head, 0, 0, 0).scale.set(1.02,1.04,.97);
+    const hair = addMesh(new THREE.SphereGeometry(.213, 22, 14, 0, Math.PI * 2, 0, Math.PI * .56), mat(0x302b27), head, 0, .052, .008);
     hair.scale.set(1.04, 1.0, 1.08);
-    // Hair fringe and face details.
-    addMesh(new THREE.SphereGeometry(.105, 14, 8, 0, Math.PI, 0, Math.PI*.48), mat(0x302b27), head, 0, .025, -.125).scale.set(1.25,.58,.52);
-    [-.061,.061].forEach(x=>{
-      addMesh(new THREE.SphereGeometry(.014,9,7),mat(0x202322),head,x,.005,-.169);
-      addMesh(new THREE.BoxGeometry(.043,.012,.012),mat(0x49352e),head,x,.039,-.158);
+    // A soft fringe, eyes, brows and ears make the face readable from close range.
+    addMesh(new THREE.SphereGeometry(.112, 16, 10, 0, Math.PI, 0, Math.PI*.48), mat(0x302b27), head, 0, .030, -.142).scale.set(1.25,.58,.52);
+    [-.067,.067].forEach(x=>{
+      addMesh(new THREE.SphereGeometry(.015,10,8),mat(0x202322),head,x,-.005,-.192);
+      addMesh(new THREE.BoxGeometry(.047,.012,.012),mat(0x49352e),head,x,.034,-.181);
     });
-    addMesh(new THREE.SphereGeometry(.023,9,8),skin,head,0,-.035,-.176);
-    [-1,1].forEach(side=>addMesh(new THREE.SphereGeometry(.043,10,8),skin,head,side*.18,0,0));
+    addMesh(new THREE.SphereGeometry(.022,10,8),skin,head,0,-.046,-.192);
+    [-1,1].forEach(side=>addMesh(new THREE.SphereGeometry(.045,12,9),skin,head,side*.202,0,0));
 
     const buildArms = (parent, holding) => {
       const pivots=[], elbows=[];
       [-1,1].forEach(side=>{
-        const pivot=new THREE.Group(); pivot.position.set(side*.285,1.25,0); parent.add(pivot);
+        const pivot=new THREE.Group(); pivot.position.set(side*.305,1.205,0); parent.add(pivot);
         addMesh(new THREE.SphereGeometry(.105,14,11),shirt,pivot,0,-.018,0);
         const upperEnd=holding?[-side*.15,-.12,-.18]:[side*.075,-.245,.018];
-        segment(pivot,[0,0,0],upperEnd,.078,shirt,11);
+        segment(pivot,[0,0,0],upperEnd,.086,shirt,12);
         const elbow=new THREE.Group(); elbow.position.set(...upperEnd); pivot.add(elbow);
         addMesh(new THREE.SphereGeometry(.067,11,9),shirt,elbow,0,0,0);
         const foreEnd=holding?[-side*.07,-.055,-.22]:[side*.025,-.245,.015];
-        segment(elbow,[0,0,0],foreEnd,.064,shirt,10);
+        segment(elbow,[0,0,0],foreEnd,.073,shirt,11);
         addMesh(new THREE.SphereGeometry(.069,13,10),skin,elbow,...foreEnd);
         // A small thumb gives the hand a readable silhouette from behind.
         addMesh(new THREE.CapsuleGeometry(.022,.045,3,7),skin,elbow,foreEnd[0]+side*.035,foreEnd[1]+.015,foreEnd[2]-.018).rotation.z=side*.28;
@@ -340,12 +346,12 @@
 
     const legs=[],knees=[];
     [-1,1].forEach(side=>{
-      const hip=new THREE.Group(); hip.position.set(side*.125,.66,0); root.add(hip);
+      const hip=new THREE.Group(); hip.position.set(side*.13,.635,0); root.add(hip);
       addMesh(new THREE.SphereGeometry(.10,11,9),pants,hip,0,0,0);
-      segment(hip,[0,0,0],[0,-.285,0],.092,pants,11);
+      segment(hip,[0,0,0],[0,-.285,0],.095,pants,12);
       const knee=new THREE.Group(); knee.position.set(0,-.285,0); hip.add(knee);
       addMesh(new THREE.SphereGeometry(.078,11,9),pants,knee,0,0,0);
-      segment(knee,[0,0,0],[0,-.285,-.012],.073,pants,10);
+      segment(knee,[0,0,0],[0,-.285,-.012],.078,pants,11);
       makeBox(knee,[.19,.115,.30],[0,-.292,-.075],materials.shoe);
       makeBox(knee,[.19,.025,.245],[0,-.354,-.085],mat(0xe5e5dc));
       legs.push(hip); knees.push(knee);
@@ -454,7 +460,7 @@
     const jumpY=api.jumpHeight?api.jumpHeight():0;
     local.position.set(p.x,jumpY+(moving ? Math.abs(Math.sin(now / 175)) * .045 : 0),p.z); local.rotation.y = yaw;
     local.visible = !isFirst;
-    const newColor = api.currentColor ? api.currentColor() : '#267c65';
+    const newColor = api.currentColor ? api.currentColor() : '#2864cf';
     if (localColor !== newColor) { localColor = newColor; local.userData.shirtMesh.material.color.set(newColor); }
     const phase=now/(running?112:178),stride=moving?Math.sin(phase):0;
     local.userData.legs.forEach((leg,i)=>{const swing=moving?Math.sin(phase+i*Math.PI)*(running?.60:.43):0;leg.rotation.x=THREE.MathUtils.damp(leg.rotation.x,swing,9,dt);const knee=local.userData.knees?.[i];if(knee)knee.rotation.x=THREE.MathUtils.damp(knee.rotation.x,moving?Math.max(0,-swing)*.82:0,10,dt);});
@@ -498,7 +504,7 @@
       const g = entry.group;
       g.position.set(peer.x, 0, peer.z); g.rotation.y = peer.yaw || 0;
       g.visible = true; g.userData.label.material.opacity = 1;
-      const color = peer.color || '#267c65';
+      const color = peer.color || '#2864cf';
       if (entry.color !== color) {
         entry.color = color;
         g.userData.shirtMesh.material.color.set(color);
