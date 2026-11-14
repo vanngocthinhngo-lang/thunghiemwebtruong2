@@ -1,4 +1,4 @@
-UTE CAMPUS – BẢN 13 · AVATAR / SÂN BÓNG / ĐIỀU KHIỂN
+UTE CAMPUS – BẢN 14 · AVATAR / TỐI ƯU HIỆU NĂNG / MULTIPLAYER
 ===========================================================
 
 1) CẬP NHẬT MÃ NGUỒN
@@ -124,3 +124,22 @@ V13 – chỉnh theo ảnh người dùng:
 - Sửa vạch giữa sân: đường giữa chạy ngang sân và vuông góc với trục hai khung thành; trước đó nhầm nối hai tâm gôn tạo một đường trắng dài lệch.
 - Tăng khung thành lên khoảng 5,8 m rộng × 2,25 m cao; vùng ghi bàn vật lý mở rộng đồng bộ.
 - A/D hoặc phím mũi tên trái/phải xoay người và camera theo hướng; W/S tiến lùi; Z/C có thể đi ngang; không cần dùng chuột để quay trái/phải. Joystick ngang trên điện thoại cũng xoay hướng.
+
+
+10) TỐI ƯU HIỆU NĂNG VÀ PHÒNG CHUNG
+- Mô hình avatar được làm tròn, đầu lớn hơn, thân ngắn/rộng hơn và áo xanh dương theo ảnh tham chiếu.
+- Chuyển động tay/chân dùng nhịp chậm hơn, khớp vai/khuỷu và đầu được làm mượt.
+- Bản 3D tắt shadow-map toàn cảnh (nguyên nhân tốn GPU), thay bằng bóng tiếp xúc mềm dưới chân nhân vật.
+- Chất lượng render tự giảm độ phân giải nếu FPS thấp và tăng lại khi máy đủ tải.
+- Vòng render 3D tạm dừng khi chuyển sang bản đồ hoặc tab bị ẩn; minimap cập nhật 10 lần/giây.
+- Đồng bộ vị trí giới hạn khoảng 5 lần/giây/người, chỉ gửi khi thay đổi hoặc heartbeat; ballstate/botstate/matchState cũng được giảm tần suất.
+- Chỉ dựng tối đa 20 avatar ở gần người xem; số người online vẫn tính toàn bộ Presence/RPC.
+- Mức giới hạn phát sự kiện trong trình duyệt chỉ giảm tải vô ý, KHÔNG phải biện pháp chống DDoS.
+
+11) BẢO VỆ SERVER / GIỚI HẠN CẦN BIẾT
+- Không đưa Supabase service_role key vào website; chỉ dùng publishable/anon key.
+- Bật RLS cho mọi bảng dữ liệu người dùng và chỉ cấp quyền tối thiểu cho người đăng nhập.
+- Kiểm tra quyền và dữ liệu trong RPC/server-side trước khi cho phép thay đổi hồ sơ, điểm hoặc trạng thái trận.
+- Nếu website mở công khai, cần lớp kiểm soát truy cập/rate-limit ở phía máy chủ hoặc WAF/CDN phù hợp; giới hạn ở JavaScript có thể bị bỏ qua.
+- Bản ZIP không thể tự chống một cuộc DDoS thật hoặc tăng quota Supabase/Vercel. Cần theo dõi usage/log và cấu hình bảo vệ ở nhà cung cấp.
+- Đã tối ưu client và giảm tần suất Broadcast; chưa có kiểm thử tải thực tế nhiều máy/người dùng.

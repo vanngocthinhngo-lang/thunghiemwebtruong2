@@ -133,7 +133,7 @@
   const pos=fromField(u,v),velocity=[longAxis[0]*vu+shortAxis[0]*vv,longAxis[1]*vu+shortAxis[1]*vv];
   ball={x:pos[0],z:pos[1],vx:velocity[0],vz:velocity[1],t};
   if(reset)net.emit('ballstate',{x:ball.x,z:ball.z,vx:ball.vx,vz:ball.vz});
-  if(t-lastBallSync>150){lastBallSync=t;net.emit('ballstate',{x:ball.x,z:ball.z,vx:ball.vx,vz:ball.vz});}
+  if(t-lastBallSync>300){lastBallSync=t;net.emit('ballstate',{x:ball.x,z:ball.z,vx:ball.vx,vz:ball.vz});}
  }
  function updateBot(t){
   if(!botNeeded()||matchEnded)return null;
@@ -144,7 +144,7 @@
   if(d<1.65&&t-lastBotKick>1700&&t>=kickoffLockUntil&&isMatchHost()){
    lastBotKick=t;const dir=[-longAxis[0],-longAxis[1]];kick(dir[0]*10.0,dir[1]*10.0);
   }
-  if(t-lastBotSync>120&&isMatchHost()){lastBotSync=t;net.emit('botstate',{x:+bot.x.toFixed(2),z:+bot.z.toFixed(2),yaw:+bot.yaw.toFixed(3)});}
+  if(t-lastBotSync>250&&isMatchHost()){lastBotSync=t;net.emit('botstate',{x:+bot.x.toFixed(2),z:+bot.z.toFixed(2),yaw:+bot.yaw.toFixed(3)});}
   return {id:'ute-campus-bot',name:'BOT UTE',color:'#d94d42',x:bot.x,z:bot.z,yaw:bot.yaw,weapon:'',moving:d>1.2,firing:false,hp:100,fighting:false,queue:true,queueAt:matchJoinAt,team:1,bot:true};
  }
 
@@ -318,7 +318,7 @@
   }
   ballTick();
   const team=localTeam();if(matchQueue&&team!==lastAssignedTeam){lastAssignedTeam=team;placeOnTeam();}
-  if(matchQueue&&!matchEnded&&isMatchHost()&&t-lastMatchSync>650){lastMatchSync=t;net.emit('matchState',{kind:'start',queueStartedAt:matchQueueStartedAt,startedAt:matchStartedAt,endsAt:matchEndAt,scoreA:matchScoreA,scoreB:matchScoreB,hostId:matchHostId});}net.setExtra({f:fight?1:0,hp:Math.round(hp),w:(fight&&weapon)?1:0,weapon:(fight&&weapon)?weapon:'',fighting:!!(fight&&alive&&weapon),moving:api.moving(),firing:!!(fight&&firing),queue:!!matchQueue,queueAt:matchQueue?matchJoinAt:0,team});
+  if(matchQueue&&!matchEnded&&isMatchHost()&&t-lastMatchSync>1000){lastMatchSync=t;net.emit('matchState',{kind:'start',queueStartedAt:matchQueueStartedAt,startedAt:matchStartedAt,endsAt:matchEndAt,scoreA:matchScoreA,scoreB:matchScoreB,hostId:matchHostId});}net.setExtra({f:fight?1:0,hp:Math.round(hp),w:(fight&&weapon)?1:0,weapon:(fight&&weapon)?weapon:'',fighting:!!(fight&&alive&&weapon),moving:api.moving(),firing:!!(fight&&firing),queue:!!matchQueue,queueAt:matchQueue?matchJoinAt:0,team});
   const walkingNow=api.mode()==='walk';const playerCounter=$('playerCounter'),playerCounterText=$('playerCounterText');if(playerCounter){playerCounter.hidden=!walkingNow||!!(fight||matchQueue||ballOn);if(playerCounterText)playerCounterText.textContent=(net.live()||(net.onlinePlayers&&net.onlinePlayers().length))?net.count()+' người trong phòng'+(!net.live()?' · đang đồng bộ':''):'Chưa vào phòng chung';}const arena=$('arenaPanel');if(arena)arena.hidden=!(walkingNow&&(fight||matchQueue||ballOn));const count=$('arenaCount');if(count)count.textContent=(net.count())+' online · '+matchPlayerCount()+'/10 trong trận'+(botNeeded()?' (có BOT)':'');
   const scorePanel=$('matchScore')?.parentElement;if(scorePanel)scorePanel.hidden=!(matchQueue||ballOn);
   const matchMeta=$('matchMeta'),matchClock=$('matchClock'),matchScore=$('matchScore');if(matchMeta)matchMeta.textContent=matchQueue?('ĐỘI '+(team===0?'XANH':'ĐỎ')+' · '+(botNeeded()?'BOT BÙ ĐỘI':'ĐỘI CÂN BẰNG')+(matchStartedAt?(now()<matchStartedAt+JOIN_MS?' · ĐANG GHÉP':' · ĐÃ KHÓA ĐỘI'):' · ĐANG GHÉP')):(fight?'ĐẤU SÚNG REALTIME':'SÂN BÓNG UTE');

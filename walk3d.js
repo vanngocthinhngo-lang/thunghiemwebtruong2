@@ -17,11 +17,16 @@
   scene.background = new THREE.Color(0xbad5e5);
   scene.fog = new THREE.Fog(0xbad5e5, 65, 220);
   const camera = new THREE.PerspectiveCamera(67, innerWidth / innerHeight, 0.08, 320);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.7));
+  // Balanced GPU defaults: avoid expensive full-scene shadow maps and cap DPR.
+  const lowEndDevice = (navigator.deviceMemory && navigator.deviceMemory <= 4) ||
+    (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || innerWidth < 700;
+  const maxRenderDpr = lowEndDevice ? 1.0 : 1.35;
+  let renderDpr = Math.min(devicePixelRatio || 1, maxRenderDpr);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowEndDevice, alpha: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(renderDpr);
   renderer.setSize(innerWidth, innerHeight, false);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = false; // soft contact shadows are drawn cheaply under avatars
+  renderer.shadowMap.autoUpdate = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.1;
@@ -32,15 +37,15 @@
     const ctx = c.getContext('2d'); ctx.fillStyle = base; ctx.fillRect(0, 0, 256, 256);
     let n = seed >>> 0; const rnd = () => { n = (n * 1664525 + 1013904223) >>> 0; return n / 4294967296; };
     for (let i = 0; i < density; i++) { const a = .035 + rnd() * .12; ctx.globalAlpha = a; ctx.fillStyle = speck; const r = .35 + rnd() * 1.5; ctx.fillRect(rnd() * 256, rnd() * 256, r, r); }
-    ctx.globalAlpha = 1; const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return tex;
+    ctx.globalAlpha = 1; const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return tex;
   }
   const grassMap = noiseMap('#718a61', '#344b32', 4300, 11); grassMap.repeat.set(34, 34);
   const concreteMap = noiseMap('#c7c8be', '#747b76', 1600, 17); concreteMap.repeat.set(12, 12);
   const wallMap = noiseMap('#e3dfd2', '#8d8a7c', 950, 23); wallMap.repeat.set(4, 4);
   const roofMap = noiseMap('#86675b', '#392e2a', 850, 31); roofMap.repeat.set(5, 5);
   const grassMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: grassMap, roughness: 1 });
-  const concreteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: concreteMap, bumpMap: concreteMap, bumpScale: .025, roughness: .96 });
-  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: wallMap, bumpMap: wallMap, bumpScale: .035, roughness: .92 });
+  const concreteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: concreteMap, roughness: .96 });
+  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: wallMap, roughness: .92 });
   const materials = {
     grass: mat(0x66865b), lawn: mat(0x78956a), concrete: mat(0xc7c9bd), road: mat(0x858f91), roadEdge: mat(0xb5b7ad),
     wall: mat(0xe5e1d3), trim: mat(0xd0d2c6), window: new THREE.MeshStandardMaterial({ color: 0x557b83, roughness: .25, metalness: .12 }),
@@ -52,17 +57,13 @@
 
   const hemi = new THREE.HemisphereLight(0xe7f5ff, 0x63724f, 1.65); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffedcf, 2.2);
-  sun.position.set(-42, 62, 38); sun.castShadow = true;
-  sun.shadow.mapSize.set(1536, 1536);
-  sun.shadow.camera.left = -75; sun.shadow.camera.right = 75;
-  sun.shadow.camera.top = 75; sun.shadow.camera.bottom = -75;
-  sun.shadow.bias = -.00025; sun.shadow.normalBias = .025;
+  sun.position.set(-42, 62, 38); sun.castShadow = false;
   scene.add(sun);
   const fill = new THREE.DirectionalLight(0xb6d8ff, .48); fill.position.set(35, 24, -45); scene.add(fill);
 
   function addMesh(geometry, material, parent = scene, x = 0, y = 0, z = 0) {
     const m = new THREE.Mesh(geometry, material); m.position.set(x, y, z);
-    m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+    m.castShadow = false; m.receiveShadow = false; parent.add(m); return m;
   }
   function flatShape(points, y, material, parent = scene) {
     if (!points || points.length < 3) return null;
@@ -298,71 +299,80 @@
     sprite.scale.set(2.2, .5, 1); return sprite;
   }
 
+  const AVATAR_BLUE = '#2864cf';
   function character(color, name, isLocal = false) {
     const root = new THREE.Group();
-    // A compact, friendly campus avatar matched to the user's blue-shirt reference: approximately 1.58 m tall.
-    root.scale.setScalar(.90);
-    const shirt = mat(color || 0x2864cf, .68, .015), pants = mat(0x273b4d, .86), skin = mat(0xd6a17e, .88);
-    // Rounded, compact proportions modelled after the blue-shirt avatar reference.
-    const torso = addMesh(new THREE.CapsuleGeometry(.265, .29, 6, 16), shirt, root, 0, .99, 0);
-    torso.scale.set(1.16, 1.02, .94);
-    addMesh(new THREE.SphereGeometry(.225, 16, 12), shirt, root, 0, .765, .008).scale.set(1.12,.72,.94);
-    // Short neck and a rounder head; keep overall avatar height close to 1.55 m.
-    addMesh(new THREE.CylinderGeometry(.075, .082, .12, 14), skin, root, 0, 1.315, 0);
-    const head = new THREE.Group(); head.position.set(0, 1.47, 0); root.add(head);
-    addMesh(new THREE.SphereGeometry(.207, 24, 18), skin, head, 0, 0, 0).scale.set(1.02,1.04,.97);
-    const hair = addMesh(new THREE.SphereGeometry(.213, 22, 14, 0, Math.PI * 2, 0, Math.PI * .56), mat(0x302b27), head, 0, .052, .008);
-    hair.scale.set(1.04, 1.0, 1.08);
-    // A soft fringe, eyes, brows and ears make the face readable from close range.
-    addMesh(new THREE.SphereGeometry(.112, 16, 10, 0, Math.PI, 0, Math.PI*.48), mat(0x302b27), head, 0, .030, -.142).scale.set(1.25,.58,.52);
-    [-.067,.067].forEach(x=>{
-      addMesh(new THREE.SphereGeometry(.015,10,8),mat(0x202322),head,x,-.005,-.192);
-      addMesh(new THREE.BoxGeometry(.047,.012,.012),mat(0x49352e),head,x,.034,-.181);
+    // Compact rounded campus avatar based on the user's reference image.
+    root.scale.setScalar(.92);
+    const shirt = mat(color || AVATAR_BLUE, .72, .01), pants = mat(0x26394b, .88), skin = mat(0xd8a681, .9);
+    const hairMat = mat(0x302a27, .92), eyeMat = mat(0x202323, .65);
+
+    // Rounded torso and slightly protruding belly; shorter and broader than the previous model.
+    const torso = addMesh(new THREE.CapsuleGeometry(.285, .28, 6, 18), shirt, root, 0, .985, 0);
+    torso.scale.set(1.12, .92, .96);
+    addMesh(new THREE.SphereGeometry(.245, 18, 14), shirt, root, 0, .755, .015).scale.set(1.13, .72, .94);
+    addMesh(new THREE.CylinderGeometry(.083, .09, .105, 14), skin, root, 0, 1.335, 0);
+
+    // Larger rounded head, simple dark fringe and visible facial features.
+    const head = new THREE.Group(); head.position.set(0, 1.49, 0); root.add(head);
+    addMesh(new THREE.SphereGeometry(.247, 24, 18), skin, head, 0, 0, 0).scale.set(1.0, 1.04, .98);
+    const cap = addMesh(new THREE.SphereGeometry(.253, 24, 16, 0, Math.PI * 2, 0, Math.PI * .56), hairMat, head, 0, .065, .012);
+    cap.scale.set(1.04, 1.0, 1.06);
+    addMesh(new THREE.SphereGeometry(.13, 16, 10, 0, Math.PI, 0, Math.PI * .48), hairMat, head, 0, .027, -.174).scale.set(1.3, .60, .52);
+    [-.078, .078].forEach(x => {
+      addMesh(new THREE.SphereGeometry(.016, 10, 8), eyeMat, head, x, -.018, -.232);
+      addMesh(new THREE.BoxGeometry(.052, .012, .012), hairMat, head, x, .031, -.219);
     });
-    addMesh(new THREE.SphereGeometry(.022,10,8),skin,head,0,-.046,-.192);
-    [-1,1].forEach(side=>addMesh(new THREE.SphereGeometry(.045,12,9),skin,head,side*.202,0,0));
+    addMesh(new THREE.SphereGeometry(.022, 10, 8), skin, head, 0, -.075, -.232);
+    [-1, 1].forEach(side => addMesh(new THREE.SphereGeometry(.047, 12, 9), skin, head, side * .239, -.005, 0));
 
     const buildArms = (parent, holding) => {
-      const pivots=[], elbows=[];
-      [-1,1].forEach(side=>{
-        const pivot=new THREE.Group(); pivot.position.set(side*.305,1.205,0); parent.add(pivot);
-        addMesh(new THREE.SphereGeometry(.105,14,11),shirt,pivot,0,-.018,0);
-        const upperEnd=holding?[-side*.15,-.12,-.18]:[side*.075,-.245,.018];
-        segment(pivot,[0,0,0],upperEnd,.086,shirt,12);
-        const elbow=new THREE.Group(); elbow.position.set(...upperEnd); pivot.add(elbow);
-        addMesh(new THREE.SphereGeometry(.067,11,9),shirt,elbow,0,0,0);
-        const foreEnd=holding?[-side*.07,-.055,-.22]:[side*.025,-.245,.015];
-        segment(elbow,[0,0,0],foreEnd,.073,shirt,11);
-        addMesh(new THREE.SphereGeometry(.069,13,10),skin,elbow,...foreEnd);
-        // A small thumb gives the hand a readable silhouette from behind.
-        addMesh(new THREE.CapsuleGeometry(.022,.045,3,7),skin,elbow,foreEnd[0]+side*.035,foreEnd[1]+.015,foreEnd[2]-.018).rotation.z=side*.28;
+      const pivots = [], elbows = [];
+      [-1, 1].forEach(side => {
+        const pivot = new THREE.Group(); pivot.position.set(side * .325, 1.19, 0); parent.add(pivot);
+        addMesh(new THREE.SphereGeometry(.108, 14, 11), shirt, pivot, 0, -.025, 0);
+        const upperEnd = holding ? [-side * .135, -.13, -.16] : [side * .025, -.205, .012];
+        segment(pivot, [0, -.015, 0], upperEnd, .087, shirt, 12);
+        const elbow = new THREE.Group(); elbow.position.set(...upperEnd); pivot.add(elbow);
+        addMesh(new THREE.SphereGeometry(.071, 12, 10), shirt, elbow, 0, 0, 0);
+        const foreEnd = holding ? [-side * .065, -.065, -.205] : [side * .012, -.205, .006];
+        segment(elbow, [0, 0, 0], foreEnd, .075, shirt, 11);
+        addMesh(new THREE.SphereGeometry(.073, 14, 11), skin, elbow, ...foreEnd);
+        addMesh(new THREE.CapsuleGeometry(.022, .045, 3, 7), skin, elbow,
+          foreEnd[0] + side * .034, foreEnd[1] + .015, foreEnd[2] - .016).rotation.z = side * .25;
         pivots.push(pivot); elbows.push(elbow);
       });
-      return {pivots,elbows};
+      return { pivots, elbows };
     };
-    const armsHold=new THREE.Group(); root.add(armsHold); const hold=buildArms(armsHold,true);
-    const armsIdle=new THREE.Group(); root.add(armsIdle); const idle=buildArms(armsIdle,false);
-    armsHold.visible=false; armsIdle.visible=true;
+    const armsHold = new THREE.Group(); root.add(armsHold); const hold = buildArms(armsHold, true);
+    const armsIdle = new THREE.Group(); root.add(armsIdle); const idle = buildArms(armsIdle, false);
+    armsHold.visible = false; armsIdle.visible = true;
 
-    const legs=[],knees=[];
-    [-1,1].forEach(side=>{
-      const hip=new THREE.Group(); hip.position.set(side*.13,.635,0); root.add(hip);
-      addMesh(new THREE.SphereGeometry(.10,11,9),pants,hip,0,0,0);
-      segment(hip,[0,0,0],[0,-.285,0],.095,pants,12);
-      const knee=new THREE.Group(); knee.position.set(0,-.285,0); hip.add(knee);
-      addMesh(new THREE.SphereGeometry(.078,11,9),pants,knee,0,0,0);
-      segment(knee,[0,0,0],[0,-.285,-.012],.078,pants,11);
-      makeBox(knee,[.19,.115,.30],[0,-.292,-.075],materials.shoe);
-      makeBox(knee,[.19,.025,.245],[0,-.354,-.085],mat(0xe5e5dc));
+    // Shorter legs, rounded knees and simple dark trainers.
+    const legs = [], knees = [];
+    [-1, 1].forEach(side => {
+      const hip = new THREE.Group(); hip.position.set(side * .135, .635, 0); root.add(hip);
+      addMesh(new THREE.SphereGeometry(.105, 12, 9), pants, hip, 0, 0, 0);
+      segment(hip, [0, 0, 0], [0, -.235, 0], .098, pants, 12);
+      const knee = new THREE.Group(); knee.position.set(0, -.235, 0); hip.add(knee);
+      addMesh(new THREE.SphereGeometry(.081, 12, 9), pants, knee, 0, 0, 0);
+      segment(knee, [0, 0, 0], [0, -.225, -.012], .079, pants, 11);
+      makeBox(knee, [.205, .125, .305], [0, -.238, -.065], materials.shoe);
       legs.push(hip); knees.push(knee);
     });
-    const gunHolder=new THREE.Group(); gunHolder.position.set(.015,1.16,-.49); root.add(gunHolder);
-    const label=makeNameSprite(name,'#ffffff'); label.position.set(0,2.02,0); label.visible=!isLocal; root.add(label);
-    root.userData={legs,knees,gunHolder,label,shirt,name,isLocal,shirtMesh:torso,armsHold,armsIdle,
-      idleArms:idle.pivots,holdArms:hold.pivots,idleElbows:idle.elbows,holdElbows:hold.elbows,head};
+
+    // A flat translucent contact shadow replaces costly real-time shadow mapping.
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(.43, 20),
+      new THREE.MeshBasicMaterial({ color: 0x17231d, transparent: true, opacity: .19, depthWrite: false }));
+    shadow.rotation.x = -Math.PI / 2; shadow.position.y = .018; shadow.renderOrder = 1; root.add(shadow);
+
+    const gunHolder = new THREE.Group(); gunHolder.position.set(.015, 1.13, -.47); root.add(gunHolder);
+    const label = makeNameSprite(name, '#ffffff'); label.position.set(0, 2.04, 0); label.visible = !isLocal; root.add(label);
+    root.userData = { legs, knees, gunHolder, label, shirt, name, isLocal, shirtMesh: torso,
+      armsHold, armsIdle, idleArms: idle.pivots, holdArms: hold.pivots,
+      idleElbows: idle.elbows, holdElbows: hold.elbows, head, shadow };
     return root;
   }
-
   const local = character('#2864cf', 'Bạn', true); scene.add(local);
   const remote = new Map();
   let firstPersonGun = null, firstPersonWeapon = '';
@@ -385,7 +395,7 @@
     firstPersonGun = null; firstPersonWeapon = key || ''; firstPersonHandsMode = mode;
     if (!active) return;
     firstPersonGun = new THREE.Group();
-    const sleeve = mat(api.currentColor ? api.currentColor() : 0x267c65);
+    const sleeve = mat(AVATAR_BLUE);
     if (key) firstPersonGun.add(weaponModel(key));
     // Bare hands remain visible when the player switches the weapon mode off.
     segment(firstPersonGun, [-.30,-.24,-.22], [-.10,-.19,-.52], .075, sleeve);
@@ -438,13 +448,13 @@
   function resize() {
     const w = innerWidth, h = innerHeight;
     camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.7)); renderer.setSize(w, h, false);
+    renderer.setPixelRatio(renderDpr); renderer.setSize(w, h, false);
   }
   addEventListener('resize', resize);
 
   const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-  let lastRender = 0, camReady = false;
+  let lastRender = 0, camReady = false, qualityStart = performance.now(), qualityFrames = 0;
   function render() {
     if (!document.body.classList.contains('walking')) return;
     const now = performance.now(), dt = Math.min(.05, (now - (lastRender || now)) / 1000 || .016); lastRender = now;
@@ -458,11 +468,13 @@
     // When combat is switched off, forcibly clear both weapon meshes and muzzle effects.
     if (!state.fight && localHeldWeapon) { setHeldGun(local, ''); localHeldWeapon = ''; }
     const jumpY=api.jumpHeight?api.jumpHeight():0;
-    local.position.set(p.x,jumpY+(moving ? Math.abs(Math.sin(now / 175)) * .045 : 0),p.z); local.rotation.y = yaw;
+    const phase = now / (running ? 145 : 215);
+    const walkBob = moving ? Math.abs(Math.sin(phase * 2)) * .026 : 0;
+    local.position.set(p.x, jumpY + walkBob, p.z); local.rotation.y = yaw;
     local.visible = !isFirst;
-    const newColor = api.currentColor ? api.currentColor() : '#2864cf';
+    const newColor = AVATAR_BLUE;
     if (localColor !== newColor) { localColor = newColor; local.userData.shirtMesh.material.color.set(newColor); }
-    const phase=now/(running?112:178),stride=moving?Math.sin(phase):0;
+    const stride = moving ? Math.sin(phase) : 0;
     local.userData.legs.forEach((leg,i)=>{const swing=moving?Math.sin(phase+i*Math.PI)*(running?.60:.43):0;leg.rotation.x=THREE.MathUtils.damp(leg.rotation.x,swing,9,dt);const knee=local.userData.knees?.[i];if(knee)knee.rotation.x=THREE.MathUtils.damp(knee.rotation.x,moving?Math.max(0,-swing)*.82:0,10,dt);});
     if(local.userData.holdArms)local.userData.holdArms.forEach((arm,i)=>{arm.rotation.x=THREE.MathUtils.damp(arm.rotation.x,moving?(i===0?.035:-.035):0,7,dt);});
     if(local.userData.holdElbows)local.userData.holdElbows.forEach(el=>{el.rotation.x=THREE.MathUtils.damp(el.rotation.x,0,8,dt);});
@@ -470,7 +482,8 @@
     if(local.userData.idleElbows)local.userData.idleElbows.forEach((el,i)=>{el.rotation.x=THREE.MathUtils.damp(el.rotation.x,moving?Math.max(0,(i===0?-stride:stride))*.22:0,8,dt);});
     local.userData.shirtMesh.position.y=THREE.MathUtils.damp(local.userData.shirtMesh.position.y,1.02+(moving?Math.abs(stride)*.025:0),9,dt);
     if(local.userData.head)local.userData.head.rotation.z=THREE.MathUtils.damp(local.userData.head.rotation.z,moving?Math.sin(now/300)*.025:0,6,dt);
-    local.rotation.z=THREE.MathUtils.damp(local.rotation.z,moving?Math.sin(phase)*.022:0,7,dt);
+    local.rotation.z=THREE.MathUtils.damp(local.rotation.z,moving?Math.sin(phase)*.018:0,7,dt);
+    if(local.userData.shadow){local.userData.shadow.scale.setScalar(1+jumpY*.28);local.userData.shadow.material.opacity=.19*(1-Math.min(.72,jumpY*.62));}
     if (localHeldWeapon !== weapon) { setHeldGun(local, weapon); localHeldWeapon = weapon; }
     const kickback = local.userData.recoilUntil > now ? Math.sin((local.userData.recoilUntil - now) / 90 * Math.PI) * .10 : 0;
     local.userData.gunHolder.position.z = -.55 + kickback; local.userData.gunHolder.rotation.x = -kickback * 1.4;
@@ -517,10 +530,11 @@
       const peerWeapon = (peer.fighting || peer.f) ? (peer.weapon || '') : '';
       if (entry.weapon !== peerWeapon) { entry.weapon = peerWeapon; setHeldGun(g, entry.weapon); }
       const recoil = g.userData.recoilUntil > now ? .08 : 0; g.userData.gunHolder.position.z = -.55 + recoil;
-      const walkPhase=peer.moving?Math.sin(now/175)*.48:0;
+      const walkPhase=peer.moving?Math.sin(now/215)*.42:0;
       g.userData.legs.forEach((leg,i)=>{const swing=walkPhase*(i?-1:1);leg.rotation.x=THREE.MathUtils.damp(leg.rotation.x,swing,8,dt);const knee=g.userData.knees?.[i];if(knee)knee.rotation.x=THREE.MathUtils.damp(knee.rotation.x,peer.moving?Math.max(0,-swing)*.65:0,9,dt);});
       if(g.userData.idleArms)g.userData.idleArms.forEach((arm,i)=>{arm.rotation.x=THREE.MathUtils.damp(arm.rotation.x,peer.moving?(i===0?walkPhase:-walkPhase):0,8,dt);});
-      if(g.userData.idleElbows)g.userData.idleElbows.forEach((el,i)=>{el.rotation.x=THREE.MathUtils.damp(el.rotation.x,peer.moving?Math.max(0,i===0?-walkPhase:walkPhase)*.2:0,8,dt);});
+      if(g.userData.idleElbows)g.userData.idleElbows.forEach((el,i)=>{el.rotation.x=THREE.MathUtils.damp(el.rotation.x,peer.moving?Math.max(0,i===0?-walkPhase:walkPhase)*.25:0,8,dt);});
+      if(g.userData.shadow)g.userData.shadow.material.opacity=.19;
       if(g.userData.holdArms)g.userData.holdArms.forEach(arm=>{arm.rotation.x=THREE.MathUtils.damp(arm.rotation.x,peer.moving?walkPhase*.05:0,8,dt);});
     });
     for (const [id, entry] of remote) if (!liveIds.has(id)) { scene.remove(entry.group); remote.delete(id); }
@@ -542,6 +556,15 @@
       if (firstPersonGun?.children[0]?.userData.flash) firstPersonGun.children[0].userData.flash.visible = false;
     }
     renderer.render(scene, camera);
+    // Dynamic resolution lowers GPU load on laptops/phones if frame rate drops.
+    qualityFrames++;
+    if (now - qualityStart >= 2400) {
+      const fps = qualityFrames * 1000 / Math.max(1, now - qualityStart);
+      const nextDpr = fps < 39 ? Math.max(.75, renderDpr - .15) :
+        fps > 56 ? Math.min(maxRenderDpr, renderDpr + .05) : renderDpr;
+      if (Math.abs(nextDpr - renderDpr) > .01) { renderDpr = nextDpr; resize(); }
+      qualityStart = now; qualityFrames = 0;
+    }
   }
 
   api.state = () => {
@@ -558,7 +581,23 @@
   window.uteWalk3D = { ready: true, render, addTracer, fireVisual: flashWeapon, scene, camera, renderer };
   document.body.classList.add('walk3d-ready');
   resize();
-  // Expose render loop only for walking mode; app.js continues drawing the aerial map.
-  const animate = () => { requestAnimationFrame(animate); render(); };
-  animate();
+  // Render only while the 3D walk view is visible. This avoids an idle GPU loop in map mode/background tabs.
+  let renderRaf = 0;
+  function animate() {
+    renderRaf = 0;
+    if (document.hidden || !document.body.classList.contains('walking')) return;
+    render();
+    renderRaf = requestAnimationFrame(animate);
+  }
+  function wakeRender() {
+    if (!renderRaf && !document.hidden && document.body.classList.contains('walking'))
+      renderRaf = requestAnimationFrame(animate);
+  }
+  const modeObserver = new MutationObserver(wakeRender);
+  modeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && renderRaf) { cancelAnimationFrame(renderRaf); renderRaf = 0; }
+    else wakeRender();
+  });
+  wakeRender();
 })();

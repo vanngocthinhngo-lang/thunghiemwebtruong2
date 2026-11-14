@@ -7,6 +7,9 @@
   const finite = Number.isFinite, clamp = (v, m) => Math.max(-m, Math.min(m, v));
   let ch = null, db = null, selfId = null, roster = [], rosterAt = 0, muted = new Set(), live = false;
   let extra = {}, raf = 0, lastSend = 0, lastSig = '', lastFrame = 0, presence = [], profile = { name: 'Người chơi', color: '#2864cf' };
+  const sentAt = new Map();
+  const EVENT_GAP = { pos: 180, ballstate: 280, botstate: 240, matchState: 900, shot: 70, kick: 120, pick: 100 };
+  const MAX_EVENT_BYTES = 1800;
   const net = { decorate: null };
 
   function notifyPresence() {
@@ -48,9 +51,17 @@
   net.on = (type, fn) => { (handlers[type] = handlers[type] || []).push(fn); };
   net.onPresence = fn => { presenceHandlers.add(fn); try { fn(presence.slice(), live); } catch {} return () => presenceHandlers.delete(fn); };
   net.emit = (type, payload) => {
-    if (!ch || !live) return false;
-    try { const result = ch.send({ type: 'broadcast', event: type, payload: { ...payload, from: selfId } }); if (result?.catch) result.catch(() => {}); }
+    if (!ch || !live || !EVENTS.includes(type) || !payload || typeof payload !== 'object') return false;
+    const stamp = performance.now(), minGap = EVENT_GAP[type] || 0;
+    if (minGap && stamp - (sentAt.get(type) || 0) < minGap) return false;
+    let packed;
+    try { packed = { ...payload, from: selfId }; if (JSON.stringify(packed).length > MAX_EVENT_BYTES) return false; }
     catch { return false; }
+    try {
+      const result = ch.send({ type: 'broadcast', event: type, payload: packed });
+      sentAt.set(type, stamp);
+      if (result?.catch) result.catch(() => {});
+    } catch { return false; }
     return true;
   };
 
@@ -83,15 +94,20 @@
       const bot = window.campusGame.botPlayer();
       if (bot) list.push(bot);
     }
+    if (list.length > 20) {
+      const me = api.position();
+      list.sort((a, b) => Math.hypot(a.x - me.x, a.z - me.z) - Math.hypot(b.x - me.x, b.z - me.z));
+      list.length = 20;
+    }
     api.peers(list);
 
     // Keep sending even when the database roster is temporarily empty. Presence and broadcast
     // can recover independently from the RPC roster polling.
-    if (live && t - lastSend >= 120) {
-      const s = api.position(), sig = [s.x.toFixed(2), s.z.toFixed(2), s.yaw.toFixed(2), JSON.stringify(extra)].join('|');
-      if (sig !== lastSig || t - lastSend > 1200) {
+    if (live && t - lastSend >= 200) {
+      const s = api.position(), sig = [Math.round(s.x * 10), Math.round(s.z * 10), Math.round(s.yaw * 30), JSON.stringify(extra)].join('|');
+      if (sig !== lastSig || t - lastSend > 1700) {
         lastSig = sig; lastSend = t;
-        net.emit('pos', { x: +s.x.toFixed(2), z: +s.z.toFixed(2), yaw: +s.yaw.toFixed(3), e: extra });
+        net.emit('pos', { x: +s.x.toFixed(1), z: +s.z.toFixed(1), yaw: +s.yaw.toFixed(2), e: extra });
       }
     }
   }
