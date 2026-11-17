@@ -1,5 +1,7 @@
-UTE CAMPUS – BẢN 14 · AVATAR / TỐI ƯU HIỆU NĂNG / MULTIPLAYER
+UTE CAMPUS – BẢN 15 · KHỐI PHÒNG HỌC / XƯỞNG / NHÀ XE / SÂN BÓNG / HIỆU NĂNG
 ===========================================================
+
+Bản 15 giữ avatar hoạt hình thấp gọn theo ảnh mẫu, làm tay đánh ngược nhịp chân, chuẩn hóa sân bóng thành hình chữ nhật thống nhất trong 2D, 3D và vật lý. Quả bóng được thu về tỷ lệ thật hơn, bề mặt gồm 12 panel ngũ giác đen và 20 panel lục giác trắng có đường ghép.
 
 1) CẬP NHẬT MÃ NGUỒN
 - Giải nén ZIP.
@@ -53,7 +55,7 @@ UTE CAMPUS – BẢN 14 · AVATAR / TỐI ƯU HIỆU NĂNG / MULTIPLAYER
   Hết 60 giây thì khóa đội, người đến sau chờ trận kế tiếp.
 - Tối đa 10 người tham gia trận (tính cả BOT nếu đang bù đội), tối đa 5 đấu 5.
   Danh sách người thật được sắp xếp ổn định; BOT tự lấp vị trí còn thiếu để cân bằng đội.
-- Sân bóng đã thu nhỏ đồng bộ giữa bản đồ toàn cảnh, mô hình 3D và vật lý. Bóng chỉ được đá chủ động khi người chơi đứng gần, bằng phím R hoặc nút Sút; bóng lăn có ma sát, bật lại ở biên. Khi tâm bóng vượt qua mặt phẳng khung thành trong phạm vi cột dọc, hệ thống cộng tỷ số, phát sự kiện cho các máy và đặt bóng về chính giữa sân để giao bóng lại.
+- Sân bóng được căn lại thành hình chữ nhật với hai gôn trên cùng trục, đường giữa và khu cấm địa thẳng hàng; kích thước mặt sân 3D và vật lý được dùng chung. Bóng chỉ được đá chủ động khi người chơi đứng gần, bằng phím R hoặc nút Sút; bóng lăn có ma sát, bật lại ở biên. Khi tâm bóng vượt qua mặt phẳng khung thành trong phạm vi cột dọc, hệ thống cộng tỷ số, phát sự kiện cho các máy và đặt bóng về chính giữa sân để giao bóng lại.
 - Nút “Rời sân bóng” để rời trận. Vào phòng chung trước khi tìm trận để gặp người thật.
 
 6) CHẾ ĐỘ ĐẤU SÚNG
@@ -86,7 +88,15 @@ Máy tính:
   Nút Lượm                : Nhặt súng
   Nút ◉                   : Đổi góc nhìn
 
-8) HÌNH ẢNH 3D
+8) THAM QUAN KHỐI PHÒNG HỌC, XƯỞNG VÀ NHÀ XE
+- Chọn địa điểm Khối mái xanh phía Tây (Khối 03), bấm Đi đến để tới cửa chính.
+- Khối 03 có hành lang giữa và 8 phòng mô phỏng mỗi tầng (4 phòng mỗi bên), tổng cộng 24 phòng trên 3 tầng; có bàn, ghế, bảng, cửa lớp và cửa sổ.
+- Đi vào bằng cửa đầu hồi, di chuyển dọc hành lang; các bàn ghế có vùng va chạm cơ bản để tránh đi xuyên qua đồ đạc.
+- Đến cầu thang cuối hành lang, nhấn F để lên tầng và Shift+F để xuống. Đây là cách chuyển tầng mô phỏng; chưa phải mô phỏng bước chân leo cầu thang từng bậc.
+- Xưởng thực hành được dựng theo ảnh tham khảo thành khung thép, mái tôn xanh, các khoang mở và bàn máy thực hành. Nhà xe mái che đặt phía sau xưởng, có vạch đỗ và xe máy low-poly.
+- Chỉ Khối 03 hiện có nội thất tham quan hoàn chỉnh; các khối khác vẫn là mô hình khối bên ngoài. Sơ đồ phòng, cầu thang, máy móc và nhà xe là bố trí minh họa vì chưa có bản vẽ mặt bằng nội thất chính thức.
+
+9) HÌNH ẢNH 3D
 - Bổ sung vật liệu bề mặt có vân nhẹ cho cỏ, nền bê tông, tường và mái.
 - Tăng chi tiết mặt đứng: đường phân tầng, khung cửa, bậu cửa, cột góc, mái che,
   ban công có lan can ở một số khối nhiều tầng, cửa ra vào và thiết bị kỹ thuật trên mái.
@@ -94,7 +104,7 @@ Máy tính:
   sân bóng có đường giữa sân vuông góc với trục hai khung thành, vòng tròn và khu vực cấm địa và hai khung thành có cột, xà ngang, lưới
   cùng quả bóng có mảng ngũ giác tối màu.
 
-9) KẾT NỐI SUPABASE
+10) KẾT NỐI SUPABASE
 - Bản nâng cấp giữ nguyên URL và publishable key hiện có trong social-config.js.
 - Bộ đếm online hợp nhất Presence với RPC roster gần nhất, loại trùng theo ID; RPC định kỳ không còn ghi đè ngược số Presence mới.
 - Luồng vẫn sử dụng Supabase Auth ẩn danh, RPC campus_sync và Supabase Realtime.
@@ -133,7 +143,7 @@ V13 – chỉnh theo ảnh người dùng:
 - Chất lượng render tự giảm độ phân giải nếu FPS thấp và tăng lại khi máy đủ tải.
 - Vòng render 3D tạm dừng khi chuyển sang bản đồ hoặc tab bị ẩn; minimap cập nhật 10 lần/giây.
 - Đồng bộ vị trí giới hạn khoảng 5 lần/giây/người, chỉ gửi khi thay đổi hoặc heartbeat; ballstate/botstate/matchState cũng được giảm tần suất.
-- Chỉ dựng tối đa 20 avatar ở gần người xem; số người online vẫn tính toàn bộ Presence/RPC.
+- Chỉ dựng tối đa 10 avatar gần nhất trong 3D (cộng thêm BOT nếu cần); số người online vẫn tính toàn bộ Presence/RPC.
 - Mức giới hạn phát sự kiện trong trình duyệt chỉ giảm tải vô ý, KHÔNG phải biện pháp chống DDoS.
 
 11) BẢO VỆ SERVER / GIỚI HẠN CẦN BIẾT
@@ -143,3 +153,12 @@ V13 – chỉnh theo ảnh người dùng:
 - Nếu website mở công khai, cần lớp kiểm soát truy cập/rate-limit ở phía máy chủ hoặc WAF/CDN phù hợp; giới hạn ở JavaScript có thể bị bỏ qua.
 - Bản ZIP không thể tự chống một cuộc DDoS thật hoặc tăng quota Supabase/Vercel. Cần theo dõi usage/log và cấu hình bảo vệ ở nhà cung cấp.
 - Đã tối ưu client và giảm tần suất Broadcast; chưa có kiểm thử tải thực tế nhiều máy/người dùng.
+
+
+V15 – bổ sung theo ảnh sân và ảnh xưởng thực hành:
+- Bóng đá là khối cầu đường kính khoảng 24 cm; phần vỏ mô phỏng đúng bố cục quả bóng đá 32 panel (12 ngũ giác đen + 20 lục giác trắng) với đường viền panel. Kích thước bóng, điểm bật biên và mặt phẳng ghi bàn dùng cùng bán kính.
+- Tay đánh ngược nhịp chân; khuỷu gập theo pha bước để dáng đi bớt cứng. Chuyển động avatar ở xa cũng áp dụng nhịp tay/chân đối nghịch và nội suy mượt.
+- Xưởng thực hành được mô phỏng lại theo ảnh tham khảo: khối thấp dài, mặt tiền có nhịp cột/ô cửa lặp lại, mái công nghiệp dạng răng cưa nhiều nhịp, mái hiên hành lang và bàn máy thực hành; nhà xe có mái che đặt phía sau xưởng.
+- Phòng học nội thất hiện được làm mẫu đầy đủ ở Khối 03: 3 tầng, hành lang giữa, 8 phòng/tầng, cửa, bảng, cửa sổ, bàn ghế và cầu thang mô phỏng. Đến khu cầu thang, nhấn F để lên tầng và Shift+F để xuống tầng. Chưa có bản vẽ mặt bằng chính thức nên không khẳng định đây là bố trí thực tế của mọi dãy nhà; các khối khác vẫn dùng mặt ngoài 3D.
+- Sân và hai khung thành sử dụng cùng trục hình chữ nhật ở bản đồ, 3D và vật lý; bot và điểm giao bóng lấy cùng tọa độ sân.
+- Đã kiểm tra cú pháp JavaScript, ID HTML và cấu trúc gói. Chưa chạy kiểm thử đồ họa trực tiếp trên Vercel hoặc tải thực tế nhiều máy.

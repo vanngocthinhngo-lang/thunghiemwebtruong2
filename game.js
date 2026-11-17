@@ -21,10 +21,11 @@
  function inside(x,z,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if(((a[1]>z)!==(b[1]>z))&&(x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0]))c=!c}return c}
 
  // ---- sân bóng & điểm an toàn ----
- const court=shrink([[405,450],[603,340],[703,480],[482,589]].map(p=>g.world(p)),.54),courtWide=grow(court,1.045),center=cen(court);
- const goalA=mid(court[3],court[0]),goalB=mid(court[1],court[2]),pitchCenter=mid(goalA,goalB);
- const longAxis=norm([goalB[0]-goalA[0],goalB[1]-goalA[1]]),shortAxis=[-longAxis[1],longAxis[0]];
- const halfLength=Math.hypot(goalB[0]-goalA[0],goalB[1]-goalA[1])/2,halfWidth=Math.hypot(court[0][0]-court[3][0],court[0][1]-court[3][1])/2,goalHalf=2.8;
+ const rawPitch=[[405,450],[603,340],[703,480],[482,589]].map(p=>g.world(p)),rawPitchCenter=cen(rawPitch);
+ const rawGoalA=mid(rawPitch[3],rawPitch[0]),rawGoalB=mid(rawPitch[1],rawPitch[2]),rawLong=Math.hypot(rawGoalB[0]-rawGoalA[0],rawGoalB[1]-rawGoalA[1]),longAxis=norm([rawGoalB[0]-rawGoalA[0],rawGoalB[1]-rawGoalA[1]]),shortAxis=[-longAxis[1],longAxis[0]];
+ const halfLength=rawLong*.27,halfWidth=Math.min(...rawPitch.map(p=>Math.abs((p[0]-rawPitchCenter[0])*shortAxis[0]+(p[1]-rawPitchCenter[1])*shortAxis[1])))*.54,pitchCenter=rawPitchCenter;
+ const fromPitch=(u,v)=>[pitchCenter[0]+longAxis[0]*u+shortAxis[0]*v,pitchCenter[1]+longAxis[1]*u+shortAxis[1]*v],court=[fromPitch(-halfLength,-halfWidth),fromPitch(halfLength,-halfWidth),fromPitch(halfLength,halfWidth),fromPitch(-halfLength,halfWidth)],courtWide=grow(court,1.045),center=cen(court);
+ const goalA=mid(court[3],court[0]),goalB=mid(court[1],court[2]),goalHalf=3.0;
  const toField=(x,z)=>[(x-pitchCenter[0])*longAxis[0]+(z-pitchCenter[1])*longAxis[1],(x-pitchCenter[0])*shortAxis[0]+(z-pitchCenter[1])*shortAxis[1]];
  const fromField=(u,v)=>[pitchCenter[0]+longAxis[0]*u+shortAxis[0]*v,pitchCenter[1]+longAxis[1]*u+shortAxis[1]*v];
  const safeC=g.world([525,803]),inSafe=(x,z)=>Math.hypot(x-safeC[0],z-safeC[1])<SAFE_R;
@@ -112,7 +113,7 @@
   const elapsed=Math.max(0,(t-ball.t)/1000),decay=Math.exp(-BALL_DRAG*elapsed),velX=ball.vx*decay,velZ=ball.vz*decay;
   let [u,v]=current,vu=velX*longAxis[0]+velZ*longAxis[1],vv=velX*shortAxis[0]+velZ*shortAxis[1];
   const prevU=previous[0],prevV=previous[1];
-  const goalPlane=halfLength+.36,insideMouth=(v0)=>Math.abs(v0)<goalHalf-.42;
+  const BALL_RADIUS=.12,goalPlane=halfLength+BALL_RADIUS*.92,insideMouth=(v0)=>Math.abs(v0)<goalHalf-BALL_RADIUS*1.35;
   // Swept crossing avoids missing a goal when a fast ball moves across the line between frames.
   if(matchStartedAt&&t<matchEndAt&&t>=kickoffLockUntil){
    const crossedPositive=prevU<goalPlane&&u>=goalPlane;
@@ -125,10 +126,10 @@
    }
   }
   let reset=false;
-  if(Math.abs(v)>halfWidth-.48){v=Math.sign(v)*(halfWidth-.48);vv=-vv*.72;reset=true;}
-  if(Math.abs(u)>halfLength-.48){
+  if(Math.abs(v)>halfWidth-BALL_RADIUS){v=Math.sign(v)*(halfWidth-BALL_RADIUS);vv=-vv*.72;reset=true;}
+  if(Math.abs(u)>halfLength-BALL_RADIUS){
    const canRollIntoGoal=insideMouth(v)&&((u>0&&vu>0)||(u<0&&vu<0));
-   if(!canRollIntoGoal){u=Math.sign(u)*(halfLength-.48);vu=-vu*.72;reset=true;}
+   if(!canRollIntoGoal){u=Math.sign(u)*(halfLength-BALL_RADIUS);vu=-vu*.72;reset=true;}
   }
   const pos=fromField(u,v),velocity=[longAxis[0]*vu+shortAxis[0]*vv,longAxis[1]*vu+shortAxis[1]*vv];
   ball={x:pos[0],z:pos[1],vx:velocity[0],vz:velocity[1],t};
@@ -213,7 +214,7 @@
  }
 
  // ---- bóng ----
- function displayBallPos(t){const raw=ballPos(t),[u,v]=toField(raw[0],raw[1]);const du=Math.max(-halfLength-.9,Math.min(halfLength+.9,u)),dv=Math.max(-halfWidth+.45,Math.min(halfWidth-.45,v));return fromField(du,dv)}
+ function displayBallPos(t){const raw=ballPos(t),[u,v]=toField(raw[0],raw[1]);const du=Math.max(-halfLength-.25,Math.min(halfLength+.25,u)),dv=Math.max(-halfWidth+.12,Math.min(halfWidth-.12,v));return fromField(du,dv)}
  function kick(vx,vz){const bp=ballPos(now());ball={x:bp[0],z:bp[1],vx,vz,t:now()};net.emit('kick',{x:+bp[0].toFixed(2),z:+bp[1].toFixed(2),vx:+vx.toFixed(2),vz:+vz.toFixed(2)})}
  function kickBall(){
   if(!ballOn||!matchQueue||fight||!alive)return;

@@ -38,8 +38,8 @@
     const e = p.e && typeof p.e === 'object' ? p.e : {};
     const x = clamp(p.x, 190), z = clamp(p.z, 190);
     let q = peers.get(p.from);
-    if (!q) { q = { x, z, yaw: p.yaw }; peers.set(p.from, q); }
-    q.tx = x; q.tz = z; q.tyaw = p.yaw; q.t = Date.now();
+    if (!q) { q = { x, z, y: clamp(p.y||0, 12), yaw: p.yaw }; peers.set(p.from, q); }
+    q.tx = x; q.tz = z; q.ty = clamp(finite(+p.y) ? +p.y : 0, 12); q.tyaw = p.yaw; q.t = Date.now();
     q.e = {
       f: e.f ? 1 : 0, hp: Math.max(0, Math.min(100, +e.hp || 0)),
       w: e.w ? 1 : 0, weapon: typeof e.weapon === 'string' ? e.weapon : '',
@@ -82,11 +82,11 @@
       if (!fresh && (!finite(p.x) || !finite(p.z))) continue;
       let x = p.x, z = p.z, yaw = p.yaw || 0, e = null;
       if (fresh) {
-        q.x += (q.tx - q.x) * k; q.z += (q.tz - q.z) * k;
+        q.x += (q.tx - q.x) * k; q.z += (q.tz - q.z) * k; q.y += (q.ty - q.y) * k;
         let dy = q.tyaw - q.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); q.yaw += dy * k;
         x = q.x; z = q.z; yaw = q.yaw; e = q.e;
       }
-      list.push({ id: p.id, name: net.decorate ? net.decorate(p, e) : p.name, color: p.color, x, z, yaw,
+      list.push({ id: p.id, name: net.decorate ? net.decorate(p, e) : p.name, color: p.color, x, z, y: q && fresh ? q.y : (finite(+p.y)?+p.y:0), yaw,
         weapon: e?.weapon || '', moving: !!e?.moving, firing: !!e?.firing, hp: e?.hp ?? 100,
         fighting: !!e?.f, queue: !!e?.queue, queueAt: e?.queueAt || 0, team: e?.team ?? 0 });
     }
@@ -104,10 +104,10 @@
     // Keep sending even when the database roster is temporarily empty. Presence and broadcast
     // can recover independently from the RPC roster polling.
     if (live && t - lastSend >= 200) {
-      const s = api.position(), sig = [Math.round(s.x * 10), Math.round(s.z * 10), Math.round(s.yaw * 30), JSON.stringify(extra)].join('|');
+      const s = api.position(), sig = [Math.round(s.x * 10), Math.round(s.z * 10), Math.round((s.y||0)*10), Math.round(s.yaw * 30), JSON.stringify(extra)].join('|');
       if (sig !== lastSig || t - lastSend > 1700) {
         lastSig = sig; lastSend = t;
-        net.emit('pos', { x: +s.x.toFixed(1), z: +s.z.toFixed(1), yaw: +s.yaw.toFixed(2), e: extra });
+        net.emit('pos', { x: +s.x.toFixed(1), z: +s.z.toFixed(1), y:+(s.y||0).toFixed(1), floor:s.floor||0, yaw: +s.yaw.toFixed(2), e: extra });
       }
     }
   }
