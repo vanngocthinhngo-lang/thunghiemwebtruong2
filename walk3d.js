@@ -186,81 +186,113 @@
 
   const colorFromHex = h => new THREE.Color(h || '#e5e1d3');
   const academicMaterials={floor:mat(0xc9c7b9),corridor:mat(0xbebcae),partition:mat(0xd8d4c7),door:mat(0x805d43),wood:mat(0xb78955),metal:mat(0x606b6b,.6,.45),board:mat(0x244d4a),ceiling:mat(0xd9d8ce)};
-  const academicFrame=createLocalFrame(CAMPUS.buildings[2].poly);
-  const roomStart=-academicFrame.halfU+4.4,roomEnd=academicFrame.halfU-9.2,roomCount=4,roomSpan=(roomEnd-roomStart)/roomCount,storey=3.6,levelCount=3;
+  const academicFrame=createLocalFrame(CAMPUS.buildings[3].poly);
+  const roomStart=-academicFrame.halfU+4.4,roomEnd=academicFrame.halfU-9.2,roomCount=4,roomSpan=(roomEnd-roomStart)/roomCount,storey=3.2,levelCount=3;
   function buildAcademicInterior(){
     const f=academicFrame,U=f.halfU-.35,V=f.halfV-.35;
     const roomCenters=Array.from({length:roomCount},(_,i)=>roomStart+(i+.5)*roomSpan);
     const tableItems=[],tableBaseItems=[],chairSeatItems=[],chairBackItems=[],chairLegItems=[];
+    const loungeSeat=mat(0x2864cf),loungeCushion=mat(0x3c77ce),loungeTable=mat(0x8f765d),loungeMetal=mat(0x626c6a,.65,.32);
+    const projectDesk=mat(0xb58a56),shelfMat=mat(0x80664d);
     for(let level=0;level<levelCount;level++){
       const base=level*storey;
       localBox(f,scene,[2*U,.18,2*V],0,0,base-.09,academicMaterials.floor,'u');
-      // Outer facade and the front/back end walls form a real indoor shell.
+      // Continuous outer shell, with a wide ground-floor entrance into the student lounge.
       localWallU(f,scene,-U,U,-V,base,storey,.28,materials.wall);
       localWallU(f,scene,-U,U,V,base,storey,.28,materials.wall);
-      if(level===0){localWallV(f,scene,-U,-V,-1.42,base,storey,.28,materials.wall);localWallV(f,scene,-U,1.42,V,base,storey,.28,materials.wall);}
+      if(level===0){localWallV(f,scene,-U,-V,-1.65,base,storey,.28,materials.wall);localWallV(f,scene,-U,1.65,V,base,storey,.28,materials.wall);}
       else localWallV(f,scene,-U,-V,V,base,storey,.28,materials.wall);
       localWallV(f,scene,U,-V,V,base,storey,.28,materials.wall);
-      // Corridor walls are interrupted by clearly framed classroom doors.
-      [-1,1].forEach(side=>{
-        let cursor=-U+.8;const doorHalf=.86;
-        roomCenters.forEach(cu=>{localWallU(f,scene,cursor,cu-doorHalf,side*1.82,base,2.55,.13,academicMaterials.partition);localWallU(f,scene,cu+doorHalf,U-.3,side*1.82,base,2.55,.13,academicMaterials.partition);cursor=cu+doorHalf;});
-        // Transoms and simple open door leaves at classroom entrances.
-        roomCenters.forEach(cu=>{
-          localWallU(f,scene,cu-.83,cu+.83,side*1.82,base+2.48,.12,.16,academicMaterials.partition);
-          localBox(f,scene,[.86,2.30,.075],cu-.80,side*1.82,base+1.15,academicMaterials.door,'v');
+
+      // Floor 2 only: separate classrooms along both sides of a central corridor.
+      if(level===1){
+        [-1,1].forEach(side=>{
+          let cursor=-U+.8;const doorHalf=.92;
+          roomCenters.forEach(cu=>{
+            localWallU(f,scene,cursor,cu-doorHalf,side*1.82,base,2.55,.13,academicMaterials.partition);
+            localWallU(f,scene,cu+doorHalf,U-.3,side*1.82,base,2.55,.13,academicMaterials.partition);
+            cursor=cu+doorHalf;
+          });
+          roomCenters.forEach(cu=>{
+            localWallU(f,scene,cu-.88,cu+.88,side*1.82,base+2.48,.12,.16,academicMaterials.partition);
+            // Slightly open classroom door leaf, not blocking the doorway.
+            localBox(f,scene,[.075,2.25,.86],cu-.82,side*1.82,base+1.12,academicMaterials.door,'v');
+          });
         });
-      });
-      // Cross partitions split each wing into distinct classrooms.
-      for(let i=0;i<=roomCount;i++){
-        const u=roomStart+i*roomSpan;
-        if(i>0)localWallV(f,scene,u,1.9,V-.25,base,2.65,.13,academicMaterials.partition);
-        if(i>0)localWallV(f,scene,u,-V+.25,-1.9,base,2.65,.13,academicMaterials.partition);
+        for(let i=0;i<=roomCount;i++){
+          const u=roomStart+i*roomSpan;
+          if(i>0){localWallV(f,scene,u,1.9,V-.25,base,2.65,.13,academicMaterials.partition);localWallV(f,scene,u,-V+.25,-1.9,base,2.65,.13,academicMaterials.partition);}
+        }
       }
-      // Windows, sills and exterior room number signs.
+
+      // Windows around all levels. Floor 1 remains visually open as the student lounge.
       roomCenters.forEach((cu,i)=>[-1,1].forEach(side=>{
         localBox(f,scene,[Math.min(3.1,roomSpan*.32),1.12,.10],cu,side*(V-.15),base+1.85,materials.glass,'u');
         localBox(f,scene,[Math.min(3.35,roomSpan*.34),.08,.18],cu,side*(V-.15),base+1.25,materials.trim,'u');
-        const sign=addMesh(new THREE.PlaneGeometry(1.35,.42),new THREE.MeshBasicMaterial({map:signTexture('PHÒNG '+(level+1)+'0'+(i+1+(side===1?0:4))),transparent:false,side:THREE.DoubleSide}),scene);
-        const pos=f.toWorld(cu,side*2.0);sign.position.set(pos[0],base+2.20,pos[1]);sign.rotation.y=f.angleU;
-        // Green teaching board on the inner end wall; the window stays clear.
-        localBox(f,scene,[.09,1.08,3.0],roomStart+i*roomSpan+.75,side*5.7,base+1.78,academicMaterials.board,'v');
+        if(level===1){
+          const sign=addMesh(new THREE.PlaneGeometry(1.30,.40),new THREE.MeshBasicMaterial({map:signTexture('PHÒNG HỌC '+(i+1+(side===1?0:4))),transparent:false,side:THREE.DoubleSide}),scene);
+          const pos=f.toWorld(cu,side*2.0);sign.position.set(pos[0],base+2.20,pos[1]);sign.rotation.y=f.angleU;
+          localBox(f,scene,[.09,1.08,2.65],roomStart+i*roomSpan+.75,side*5.35,base+1.78,academicMaterials.board,'v');
+        }
       }));
-      // Instanced desks and chairs keep the furnished classrooms lightweight.
-      roomCenters.forEach(cu=>[-1,1].forEach(side=>{
-        [-.24,.24].forEach(offset=>{
-          const du=cu+offset*roomSpan,dv=side*5.7,chairV=side*4.45,pos=f.toWorld(du,dv),chair=f.toWorld(du,chairV);
-          tableItems.push({pos,y:base+1.06,angle:f.angleU,scale:[1,1,1]});
-          for(const ou of [-.45,.45])for(const ov of [-.24,.24])tableBaseItems.push({pos:f.toWorld(du+ou,dv+ov),y:base+.64,angle:f.angleU,scale:[1,1,1]});
-          chairSeatItems.push({pos:chair,y:base+.62,angle:f.angleU,scale:[1,1,1]});chairBackItems.push({pos:chair,y:base+.96,angle:f.angleU,scale:[1,1,1]});
-          for(const ou of [-.24,.24])for(const ov of [-.22,.22])chairLegItems.push({pos:f.toWorld(du+ou,chairV+ov),y:base+.30,angle:f.angleU,scale:[1,1,1]});
-        });
-      }));
-      // Recessed ceiling panels and corridor lights keep the space readable indoors.
+
+      if(level===0){
+        // Student lounge: reception and compact sofa clusters at the edges, central aisle kept clear.
+        localBox(f,scene,[3.5,.92,1.05],-U+7.5,-V+1.15,base+.48,loungeSeat,'u');
+        localBox(f,scene,[2.9,.12,.82],-U+7.5,-V+1.15,base+.99,loungeCushion,'u');
+        for(const cu of [-U+10,-U+20,U-23,U-12])for(const side of [-1,1]){
+          const cv=side*Math.max(2.8,V-2.3);
+          localBox(f,scene,[2.55,.54,.70],cu,cv,base+.35,loungeSeat,'u');
+          localBox(f,scene,[2.25,.13,.56],cu,cv,base+.68,loungeCushion,'u');
+          localBox(f,scene,[1.05,.32,.68],cu,cv-side*1.45,base+.22,loungeTable,'u');
+        }
+        // Notice board and wall benches make the space read as a student common area.
+        localBox(f,scene,[.12,1.35,3.0],-U+8,-V+.25,base+1.95,academicMaterials.board,'v');
+        localBox(f,scene,[2.4,.14,.46],U-5,0,base+.42,loungeSeat,'u');
+      } else if(level===1){
+        // Desks and chairs exist only on floor 2 (student classrooms).
+        roomCenters.forEach(cu=>[-1,1].forEach(side=>{
+          [-.24,.24].forEach(offset=>{
+            const du=cu+offset*roomSpan,dv=side*5.15,chairV=side*3.95,pos=f.toWorld(du,dv),chair=f.toWorld(du,chairV);
+            tableItems.push({pos,y:base+1.06,angle:f.angleU,scale:[1,1,1]});
+            for(const ou of [-.45,.45])for(const ov of [-.24,.24])tableBaseItems.push({pos:f.toWorld(du+ou,dv+ov),y:base+.64,angle:f.angleU,scale:[1,1,1]});
+            chairSeatItems.push({pos:chair,y:base+.62,angle:f.angleU,scale:[1,1,1]});chairBackItems.push({pos:chair,y:base+.96,angle:f.angleU,scale:[1,1,1]});
+            for(const ou of [-.24,.24])for(const ov of [-.22,.22])chairLegItems.push({pos:f.toWorld(du+ou,chairV+ov),y:base+.30,angle:f.angleU,scale:[1,1,1]});
+          });
+        }));
+      } else {
+        // Floor 3: open project / self-study commons, no classroom partitions.
+        for(const cu of [-U+13,0,U-19]){
+          localBox(f,scene,[3.4,.12,1.45],cu,0,base+.82,projectDesk,'u');
+          for(const side of [-1,1])for(const offset of [-1.15,1.15])localBox(f,scene,[.62,.78,.62],cu+offset,side*1.55,base+.40,loungeSeat,'u');
+        }
+        for(const side of [-1,1]){
+          localBox(f,scene,[6.8,1.95,.42],0,side*(V-1.05),base+1.0,shelfMat,'u');
+          for(let k=0;k<5;k++)localBox(f,scene,[.06,1.65,.10],-3.0+k*1.5,side*(V-1.05),base+1.0,academicMaterials.metal,'u');
+        }
+      }
+
+      // Efficient recessed ceiling lights and corridor lighting.
       for(let j=0;j<6;j++){
         const u=-U+5+j*((2*U-10)/5),pos=f.toWorld(u,0);
         localBox(f,scene,[.72,.07,1.15],u,0,base+2.91,materials.trim,'u');
         const lamp=addMesh(new THREE.PlaneGeometry(.55,.82),new THREE.MeshBasicMaterial({color:0xffe9b6}),scene,pos[0],base+2.86,pos[1]);lamp.rotation.x=Math.PI/2;
       }
     }
-    // Top roof slab and a small covered entrance with steps.
     localBox(f,scene,[2*U,.22,2*V],0,0,levelCount*storey+.04,academicMaterials.ceiling,'u');
-    localBox(f,scene,[5,.18,4],-U-2.1,0,.08,materials.trim,'u');
-    for(let n=0;n<3;n++)localBox(f,scene,[1.1,.18,3.0],-U-1.2+n*.42,0,.12+n*.17,materials.trim,'u');
-    // Two flights are visible at the corridor end; F / Shift+F switches the active floor when standing on the landing.
+    // Visible stair flights and handrails connect floor 1 -> 2 -> 3.
     for(let level=0;level<levelCount-1;level++){
       const base=level*storey,steps=12,start=U-10.4,run=6.0,rise=storey/steps;
       for(let i=0;i<steps;i++)localBox(f,scene,[run/steps+.08,rise*.42,2.75],start+i*(run/steps),0,base+(i+1)*rise-rise*.21,academicMaterials.floor,'u');
-      const p0=f.toWorld(start-.15,-1.45),p1=f.toWorld(start+run,.0-1.45),p2=f.toWorld(start-.15,1.45),p3=f.toWorld(start+run,1.45);
+      const p0=f.toWorld(start-.15,-1.45),p1=f.toWorld(start+run,-1.45),p2=f.toWorld(start-.15,1.45),p3=f.toWorld(start+run,1.45);
       segment(scene,[p0[0],base+.45,p0[1]],[p1[0],base+storey+.15,p1[1]],.045,academicMaterials.metal,7);
       segment(scene,[p2[0],base+.45,p2[1]],[p3[0],base+storey+.15,p3[1]],.045,academicMaterials.metal,7);
     }
     const deskGeo=new THREE.BoxGeometry(1.08,.09,.66),baseGeo=new THREE.BoxGeometry(.065,.68,.065),seatGeo=new THREE.BoxGeometry(.66,.09,.62),backGeo=new THREE.BoxGeometry(.66,.55,.075),chairLegGeo=new THREE.BoxGeometry(.065,.58,.065);
     addInstances(deskGeo,academicMaterials.wood,tableItems);addInstances(baseGeo,academicMaterials.metal,tableBaseItems);
     addInstances(seatGeo,academicMaterials.wood,chairSeatItems);addInstances(backGeo,academicMaterials.wood,chairBackItems);addInstances(chairLegGeo,academicMaterials.metal,chairLegItems);
-    // Entrance sign at pedestrian eye level.
-    const sign=addMesh(new THREE.PlaneGeometry(3.2,.72),new THREE.MeshBasicMaterial({map:signTexture('KHỐI 03 · KHU PHÒNG HỌC','#28564d'),side:THREE.DoubleSide}),scene);
-    const pos=f.toWorld(-U-1.1,0);sign.position.set(pos[0],2.65,pos[1]);sign.rotation.y=f.angleV;
+    const signs=[['KHU A · SẢNH SINH VIÊN',0],['KHU A · PHÒNG HỌC TẦNG 2',1],['KHU A · KHÔNG GIAN TỰ HỌC',2]];
+    signs.forEach(([label,level])=>{const sign=addMesh(new THREE.PlaneGeometry(3.9,.72),new THREE.MeshBasicMaterial({map:signTexture(label,'#28564d'),side:THREE.DoubleSide}),scene);const pos=f.toWorld(-U-1.1,0);sign.position.set(pos[0],level*storey+2.65,pos[1]);sign.rotation.y=f.angleV;});
   }
   function buildWorkshop(){
     const b=CAMPUS.buildings[10],f=createLocalFrame(b.poly),U=f.halfU-.4,V=f.halfV-.5;
@@ -317,24 +349,11 @@
       localBox(f,scene,[.74,1.05,.68],u+.28,v+.85,.70,mat(i%2?0x697e80:0x858d85),'u');
       localBox(f,scene,[.48,.18,.48],u+.28,v+.85,1.30,mat(0x303b3c),'u');
     }
-    // Covered motorbike parking is behind the workshop on the rear side, with numbered bays.
-    const gc=f.toWorld(0,V+10.2),garageGroup=new THREE.Group();garageGroup.position.set(gc[0],0,gc[1]);garageGroup.rotation.y=f.angleU;scene.add(garageGroup);
-    makeBox(garageGroup,[22,.16,8],[0,.08,0],concrete);
-    makeBox(garageGroup,[22,.16,8],[0,3.25,0],roof);
-    [-10.5,10.5].forEach(x=>[-3.6,3.6].forEach(z=>makeBox(garageGroup,[.18,3.2,.18],[x,1.6,z],steel)));
-    for(let bay=0;bay<7;bay++){const x=-9+bay*3;makeBox(garageGroup,[.045,.025,6.8],[x,.18,0],materials.white);}
-    for(let i=0;i<6;i++){
-      const x=-8+i*3,z=(i%2?1.9:-1.9),bike=new THREE.Group();bike.position.set(x,.2,z);garageGroup.add(bike);
-      const wheelMat=mat(0x20272b,.9),bodyMat=mat([0x2864cf,0xb94b42,0xddd7bb][i%3]);
-      const w1=addMesh(new THREE.TorusGeometry(.30,.075,8,14),wheelMat,bike,-.55,.32,0);w1.rotation.y=Math.PI/2;
-      const w2=addMesh(new THREE.TorusGeometry(.30,.075,8,14),wheelMat,bike,.55,.32,0);w2.rotation.y=Math.PI/2;
-      makeBox(bike,[1.0,.38,.38],[0,.72,0],bodyMat);makeBox(bike,[.65,.16,.48],[.02,1.0,0],mat(0x202629));
-      segment(bike,[.35,.85,0],[.56,1.25,0],.035,steel,7);makeBox(bike,[.48,.06,.12],[.76,1.26,0],steel);
-    }
+
   }
   CAMPUS.buildings.forEach((b, index) => {
     if (b.kind === 'area' || !b.poly || b.poly.length < 3) return;
-    if(index===2){buildAcademicInterior();return;}
+    if(index===3){buildAcademicInterior();return;}
     if(index===10){buildWorkshop();return;}
     const poly = b.poly.map(world), center = poly.reduce((s, p) => [s[0] + p[0] / poly.length, s[1] + p[1] / poly.length], [0, 0]);
     const local = poly.map(p => [center[0] + (p[0] - center[0]) * .96, center[1] + (p[1] - center[1]) * .96]);
@@ -608,7 +627,7 @@
   }
   // A real soccer-ball panel layout: 12 black pentagons + 20 white hexagons.
   // The smooth white sphere beneath the panels keeps the overall silhouette round.
-  const BALL_RADIUS=.12;
+  const BALL_RADIUS=.18;
   ballMesh=new THREE.Group();
   const ballCore=addMesh(new THREE.SphereGeometry(BALL_RADIUS,40,28),new THREE.MeshStandardMaterial({color:0xf3f2ea,roughness:.72,metalness:0}),ballMesh,0,0,0);
   const phi=(1+Math.sqrt(5))/2;
@@ -629,7 +648,7 @@
   const blackPanels=addMesh(panelGeometry,new THREE.MeshStandardMaterial({color:0x171d20,roughness:.74,side:THREE.DoubleSide,flatShading:true}),ballMesh);
   const seamGeometry=new THREE.BufferGeometry();seamGeometry.setAttribute('position',new THREE.Float32BufferAttribute(edgePositions,3));
   const seams=new THREE.LineSegments(seamGeometry,new THREE.LineBasicMaterial({color:0x646a68,transparent:true,opacity:.88}));ballMesh.add(seams);scene.add(ballMesh);
-    const ballGroundShadow=addMesh(new THREE.CircleGeometry(.145,22),new THREE.MeshBasicMaterial({color:0x182018,transparent:true,opacity:.20,depthWrite:false}),scene,0,.008,0);ballGroundShadow.rotation.x=-Math.PI/2;
+    const ballGroundShadow=addMesh(new THREE.CircleGeometry(.19,24),new THREE.MeshBasicMaterial({color:0x182018,transparent:true,opacity:.20,depthWrite:false}),scene,0,.008,0);ballGroundShadow.rotation.x=-Math.PI/2;
 
   // Tracers are short-lived 3D lines, not flat screen-space decorations.
   const tracers = [];

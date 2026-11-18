@@ -63,7 +63,7 @@
  // Odd-sized human queues get one BOT on the smaller side, so teams stay even.
  function botNeeded(){const n=queuedPlayers().length;return matchQueue&&n>0&&(n%2===1)&&n<10}
  function matchPlayerCount(){return queuedPlayers().length+(botNeeded()?1:0)}
- function isMatchHost(){const list=queuedPlayers(),self=net.self()||'local-player';if(matchHostId&&list.some(p=>p.id===matchHostId))return matchHostId===self;const next=list[0]?.id||'';if(next)matchHostId=next;return !net.live()||!next||next===self}
+ function isMatchHost(){const list=queuedPlayers(),self=net.self()||'local-player';const next=list[0]?.id||self;if(matchHostId!==next)matchHostId=next;return net.live()&&next===self;}
  function placeOnTeam(){
   if(!api.setPosition)return;const list=queuedPlayers(),id=net.self()||'local-player',ix=Math.max(0,list.findIndex(p=>p.id===id)),team=ix%2,lane=(Math.floor(ix/2)-2)*2.0;
   const u=team===0?-halfLength*.50:halfLength*.50,[x,z]=fromField(u,lane);
@@ -71,6 +71,7 @@
  }
  function startMatch(){
   if(matchQueue){leaveMatch();return;}
+  if(!net?.live?.()){say('Bạn chưa kết nối phòng UTE. Hãy bấm “Vào phòng chung”, chờ Realtime kết nối rồi mới tìm trận.');$('openSocial')?.click();return;}
   const t=now(),self=net.self()||'local-player';
   const active=!!(matchStartedAt&&!matchEnded&&t<matchEndAt);
   if(active){
@@ -113,7 +114,7 @@
   const elapsed=Math.max(0,(t-ball.t)/1000),decay=Math.exp(-BALL_DRAG*elapsed),velX=ball.vx*decay,velZ=ball.vz*decay;
   let [u,v]=current,vu=velX*longAxis[0]+velZ*longAxis[1],vv=velX*shortAxis[0]+velZ*shortAxis[1];
   const prevU=previous[0],prevV=previous[1];
-  const BALL_RADIUS=.12,goalPlane=halfLength+BALL_RADIUS*.92,insideMouth=(v0)=>Math.abs(v0)<goalHalf-BALL_RADIUS*1.35;
+  const BALL_RADIUS=.18,goalPlane=halfLength+BALL_RADIUS*.92,insideMouth=(v0)=>Math.abs(v0)<goalHalf-BALL_RADIUS*1.35;
   // Swept crossing avoids missing a goal when a fast ball moves across the line between frames.
   if(matchStartedAt&&t<matchEndAt&&t>=kickoffLockUntil){
    const crossedPositive=prevU<goalPlane&&u>=goalPlane;
@@ -214,7 +215,7 @@
  }
 
  // ---- bóng ----
- function displayBallPos(t){const raw=ballPos(t),[u,v]=toField(raw[0],raw[1]);const du=Math.max(-halfLength-.25,Math.min(halfLength+.25,u)),dv=Math.max(-halfWidth+.12,Math.min(halfWidth-.12,v));return fromField(du,dv)}
+ function displayBallPos(t){const raw=ballPos(t),[u,v]=toField(raw[0],raw[1]);const du=Math.max(-halfLength-.25,Math.min(halfLength+.25,u)),dv=Math.max(-halfWidth+.15,Math.min(halfWidth-.15,v));return fromField(du,dv)}
  function kick(vx,vz){const bp=ballPos(now());ball={x:bp[0],z:bp[1],vx,vz,t:now()};net.emit('kick',{x:+bp[0].toFixed(2),z:+bp[1].toFixed(2),vx:+vx.toFixed(2),vz:+vz.toFixed(2)})}
  function kickBall(){
   if(!ballOn||!matchQueue||fight||!alive)return;
@@ -328,7 +329,7 @@
   const cross=$('crosshair');if(cross)cross.hidden=!(walkingNow&&fight&&!!weapon&&alive);
   updateHud();
  }
- $('fightBtn').onclick=()=>{fight=!fight;firing=false;if(fight){leaveMatch();weapon='pistol';ammo=WEAPONS.pistol.mag;reserve=WEAPONS.pistol.mag*2;reloadUntil=0;reloadTok++;say('Đã bật đấu súng và trang bị súng ngắn. Nhặt súng khác để đổi vũ khí.');}else{weapon=null;ammo=0;reserve=0;reloadUntil=0;reloadTok++;say('Đấu súng đã tắt. Súng được cất và hai tay trở về tư thế tự nhiên.');}};
+ $('fightBtn').onclick=()=>{if(!fight&&!net?.live?.()){say('Bạn chưa kết nối phòng UTE. Hãy vào phòng chung trước khi đấu súng.');$('openSocial')?.click();return;}fight=!fight;firing=false;if(fight){leaveMatch();weapon='pistol';ammo=WEAPONS.pistol.mag;reserve=WEAPONS.pistol.mag*2;reloadUntil=0;reloadTok++;say('Đã bật đấu súng và trang bị súng ngắn. Nhặt súng khác để đổi vũ khí.');}else{weapon=null;ammo=0;reserve=0;reloadUntil=0;reloadTok++;say('Đấu súng đã tắt. Súng được cất và hai tay trở về tư thế tự nhiên.');}};
  $('ballBtn').onclick=()=>{if(matchQueue)leaveMatch();else startMatch();};
  $('pickBtn').onclick=pick;$('reloadBtn').onclick=reload;$('kickBtn').onclick=kickBall;$('jumpBtn').onclick=()=>api.jump?.();
  $('exitWalk').onclick=()=>{firing=false;api.aerial()};

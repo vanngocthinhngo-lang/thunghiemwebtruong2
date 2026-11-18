@@ -7,7 +7,7 @@ const boundary=CAMPUS.boundary.map(world),sat=new Image();sat.src='assets/ute-sa
 const spawn=world([525,803]);
 let W=innerWidth,H=innerHeight,dpr=Math.min(devicePixelRatio||1,1.5),mode='aerial',yaw=.12,pitch=.95,zoom=1,night=false,selected=-1,walkYaw=-1.15,walkPitch=.08,firstPerson=false,speed=1,running=false,player={x:spawn[0],z:spawn[1],floor:0},move={x:0,y:0},keys={},pan={x:0,z:0};
 let myColor='#2864cf',avatarColor=myColor,remotePlayers=[],lastMiniDraw=0;let avatarRot=false;let cam,faces=[],labels=[],last=performance.now(),jumpStartedAt=0;
-const CLASS_BLOCK_ID=2, CLASS_LEVELS=3, CLASS_STOREY=3.6;
+const CLASS_BLOCK_ID=3, CLASS_LEVELS=3, CLASS_STOREY=3.2;
 const classPoly=buildings[CLASS_BLOCK_ID]?.renderPoly||[];
 const classCenter=classPoly.reduce((a,p)=>[a[0]+p[0]/classPoly.length,a[1]+p[1]/classPoly.length],[0,0]);
 const classLenA=classPoly.length?Math.hypot(classPoly[1][0]-classPoly[0][0],classPoly[1][1]-classPoly[0][1]):0;
@@ -24,11 +24,41 @@ const roomStart=-classHalfU+4.2,roomEnd=classHalfU-9.5,roomCount=4,roomSpan=(roo
 function insideClassBlock(x,z){return classPoly.length>=3&&inside(x,z,classPoly)}
 function classDoorway(x,z){const [u,v]=classLocal(x,z);return u< -classHalfU+1.8&&Math.abs(v)<1.55}
 function classNearStairs(x,z){const [u,v]=classLocal(x,z);return insideClassBlock(x,z)&&u>classHalfU-11.5&&Math.abs(v)<2.1}
-function classWallAt(x,z){const [u,v]=classLocal(x,z);if(Math.abs(v)>classHalfV-.62||u>classHalfU-.62)return true;
- if(Math.abs(v)>1.72&&Math.abs(v)<2.02){let door=false;for(let i=0;i<roomCount;i++){const cu=roomStart+(i+.5)*roomSpan;if(Math.abs(u-cu)<.92){door=true;break}}if(!door)return true;}
- for(let i=0;i<=roomCount;i++){const wallU=roomStart+i*roomSpan;if(Math.abs(u-wallU)<.24&&Math.abs(v)>2.0&&Math.abs(v)<classHalfV-.52)return true;}
- return false;}
-function classFurnitureAt(x,z){const [u,v]=classLocal(x,z);for(let i=0;i<roomCount;i++){const cu=roomStart+(i+.5)*roomSpan;for(const side of [-1,1])for(const offset of [-.24,.24]){const du=cu+offset*roomSpan,dv=side*5.7,chairV=side*4.45;if(Math.abs(u-du)<.76&&Math.abs(v-dv)<.74)return true;if(Math.abs(u-du)<.74&&Math.abs(v-chairV)<.72)return true;}}return false;}
+function classWallAt(x,z){
+ const [u,v]=classLocal(x,z),floor=player.floor||0;
+ if(Math.abs(v)>classHalfV-.62||u>classHalfU-.62)return true;
+ // Khu A tầng 1 is an open student lounge; classroom partitions exist only on floor 2.
+ if(floor===1){
+  if(Math.abs(v)>1.72&&Math.abs(v)<2.02){let door=false;for(let i=0;i<roomCount;i++){const cu=roomStart+(i+.5)*roomSpan;if(Math.abs(u-cu)<.92){door=true;break}}if(!door)return true;}
+  for(let i=0;i<=roomCount;i++){const wallU=roomStart+i*roomSpan;if(Math.abs(u-wallU)<.24&&Math.abs(v)>2.0&&Math.abs(v)<classHalfV-.52)return true;}
+ }
+ return false;
+}
+function classFurnitureAt(x,z){
+ const [u,v]=classLocal(x,z),floor=player.floor||0;
+ if(floor===0){
+  // Lounge couches and coffee tables along the sides; keep a wide, clear central aisle.
+  const loungeU=[-classHalfU+7,-classHalfU+16,classHalfU-20,classHalfU-10];
+  for(const cu of loungeU)for(const side of [-1,1]){
+   const cv=side*Math.max(2.8,classHalfV-2.2);
+   if(Math.abs(u-cu)<1.55&&Math.abs(v-cv)<.62)return true;
+   if(Math.abs(u-cu)<.62&&Math.abs(v-(cv-side*1.25))<.48)return true;
+  }
+  // Reception desk near the entrance, away from the stair route.
+  if(Math.abs(u-(-classHalfU+7.5))<1.9&&Math.abs(v-(-classHalfV+1.15))<.65)return true;
+  return false;
+ }
+ if(floor===1){
+  for(let i=0;i<roomCount;i++){const cu=roomStart+(i+.5)*roomSpan;for(const side of [-1,1])for(const offset of [-.24,.24]){const du=cu+offset*roomSpan,dv=side*5.15,chairV=side*3.95;if(Math.abs(u-du)<.76&&Math.abs(v-dv)<.68)return true;if(Math.abs(u-du)<.70&&Math.abs(v-chairV)<.66)return true;}}
+  return false;
+ }
+ // Floor 3 is a shared study / project area with tables and bookcases, not classrooms.
+ for(const cu of [-classHalfU+14,0,classHalfU-18]){
+  if(Math.abs(u-cu)<1.25&&Math.abs(v)<1.1)return true;
+  for(const side of [-1,1])if(Math.abs(u-cu)<.65&&Math.abs(v-side*(classHalfV-2.0))<.55)return true;
+ }
+ return false;
+}
 
 function jump(){const t=performance.now();if(t-jumpStartedAt<520)return;jumpStartedAt=t;}
 function jumpHeight(){if(!jumpStartedAt)return 0;const t=(performance.now()-jumpStartedAt)/680;if(t>=1){jumpStartedAt=0;return 0;}return Math.sin(Math.PI*t)*.92;}
@@ -98,9 +128,9 @@ function select(i){selected=i;const b=buildings[i];$('placeTitle').textContent=b
 buildings.forEach((b,i)=>{let l=document.createElement('button');l.className='label';l.dataset.short=i===0?'Cổng':String(i+1).padStart(2,'0');l.title=b.name+(b.floors?' · '+b.floors+' tầng':'');l.textContent=i===0?'Cổng Cao Thắng':String(i+1).padStart(2,'0')+' · '+b.name;l.onclick=()=>select(i);$('labels').append(l);labels.push(l);{let p=document.createElement('button');p.innerHTML='<span class="icon">'+b.icon+'</span>'+b.name+'<span class="arrow">↗</span>';if(b.floors){let tag=document.createElement('small');tag.className='floorTag';tag.textContent=b.floors+' tầng';p.append(tag)}p.onclick=()=>select(i);$('places').append(p);}});
 $('satellite').onclick=()=>setMode('satellite');$('aerial').onclick=()=>setMode('aerial');$('walk').onclick=$('start').onclick=()=>setMode('walk');$('closeDetail').onclick=()=>{$('detail').hidden=true;selected=-1};$('visit').onclick=()=>{let b=buildings[selected];const entry=selected===CLASS_BLOCK_ID?classWorld(-classHalfU-2.2,0):b.visit;player={x:entry[0],z:entry[1],floor:0};velocity={x:0,z:0};walkYaw=Math.atan2(player.x-b.x,player.z-b.z);setMode('walk')};$('reset').onclick=()=>{yaw=.12;pitch=.95;zoom=1;pan={x:0,z:0};player={x:spawn[0],z:spawn[1],floor:0};walkYaw=-1.15;selected=-1;$('detail').hidden=true};$('zin').onclick=()=>zoom=Math.min(zoom*1.18,2.5);$('zout').onclick=()=>zoom=Math.max(zoom/1.18,.55);$('rotate').onclick=()=>{yaw+=Math.PI/4;walkYaw+=Math.PI/4};$('night').onclick=()=>{night=!night;document.body.classList.toggle('night',night);$('night').textContent=night?'☀':'☾'};$('info').onclick=()=>$('about').showModal();$('closeAbout').onclick=()=>$('about').close();$('about').onclick=e=>{if(e.target===$('about'))$('about').close()};$('camera').onclick=()=>{firstPerson=!firstPerson;$('camera').textContent=firstPerson?'◎':'◉';};
 function norm(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').toLowerCase()}
-$('search').oninput=()=>{let q=norm($('search').value.trim());$('results').replaceChildren();$('results').hidden=!q;if(!q)return;let matches=buildings.map((b,i)=>({b,i})).filter(v=>norm(v.b.name).includes(q)||String(v.i+1)===q||v.b.icon===q);if(!matches.length){let p=document.createElement('p');p.textContent='Chưa có địa điểm này. Khối 03 có khu phòng học mô phỏng để tham quan; bố trí phòng chưa phải sơ đồ chính thức.';$('results').append(p)}matches.forEach(({b,i})=>{let p=document.createElement('button');p.textContent=b.icon+'  '+b.name;p.onclick=()=>select(i);$('results').append(p)});};$('search').onkeydown=e=>{if(e.key==='Escape'){$('results').hidden=true;$('search').blur()}if(e.key==='Enter')$('results').querySelector('button')?.click()};
-let pointers=new Map(),oldDist=0;canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(mode==='walk'&&e.pointerType==='mouse'&&e.button===0&&window.campusGame?.isFighting?.())window.campusGame.setFiring(true);if(pointers.size===2){let p=[...pointers.values()];oldDist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)}};canvas.onpointermove=e=>{let old=pointers.get(e.pointerId);if(!old)return;let dx=e.clientX-old.x,dy=e.clientY-old.y;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){let p=[...pointers.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);zoom=Math.max(.55,Math.min(2.5,zoom*d/(oldDist||d)));oldDist=d;}else if(mode==='walk'){walkYaw-=dx*.006;walkPitch=Math.max(-.16,Math.min(.45,walkPitch+dy*.002));}else if(mode==='satellite'){pan.x-=dx/cam.scale;pan.z-=dy/cam.scale;}else{yaw-=dx*.006;pitch=Math.max(.3,Math.min(1.35,pitch+dy*.004));}};canvas.onpointerup=canvas.onpointercancel=e=>{pointers.delete(e.pointerId);if(window.campusGame?.setFiring)window.campusGame.setFiring(false)};canvas.onwheel=e=>{e.preventDefault();zoom=Math.max(.55,Math.min(2.5,zoom*Math.exp(-e.deltaY*.001)));},{passive:false};canvas.addEventListener('wheel',e=>e.preventDefault(),{passive:false});
-const joy=$('joystick');function joyMove(e){let r=joy.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)/(r.width*.35),y=(e.clientY-r.top-r.height/2)/(r.height*.35),len=Math.max(1,Math.hypot(x,y));move={x:x/len,y:y/len};$('stick').style.transform=`translate(${move.x*35}px,${move.y*35}px)`;}let joyActive=false;joy.onpointerdown=e=>{joyActive=true;joy.setPointerCapture(e.pointerId);joyMove(e)};joy.onpointermove=e=>{if(joyActive)joyMove(e)};joy.onpointerup=joy.onpointercancel=()=>{joyActive=false;move={x:0,y:0};$('stick').style.transform=''};$('run').onpointerdown=e=>{running=true;$('run').setPointerCapture(e.pointerId)};$('run').onpointerup=$('run').onpointercancel=()=>running=false;document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('selected',x===b))});
+$('search').oninput=()=>{let q=norm($('search').value.trim());$('results').replaceChildren();$('results').hidden=!q;if(!q)return;let matches=buildings.map((b,i)=>({b,i})).filter(v=>norm(v.b.name).includes(q)||String(v.i+1)===q||v.b.icon===q);if(!matches.length){let p=document.createElement('p');p.textContent='Chưa có địa điểm này. Khu A có sảnh sinh viên ở tầng 1, phòng học ở tầng 2 và không gian tự học ở tầng 3; bố trí nội thất là mô phỏng.';$('results').append(p)}matches.forEach(({b,i})=>{let p=document.createElement('button');p.textContent=b.icon+'  '+b.name;p.onclick=()=>select(i);$('results').append(p)});};$('search').onkeydown=e=>{if(e.key==='Escape'){$('results').hidden=true;$('search').blur()}if(e.key==='Enter')$('results').querySelector('button')?.click()};
+let pointers=new Map(),oldDist=0;canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(mode==='walk'&&e.pointerType==='mouse'&&e.button===0&&window.campusGame?.isFighting?.())window.campusGame.setFiring(true);if(pointers.size===2){let p=[...pointers.values()];oldDist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)}};canvas.onpointermove=e=>{let old=pointers.get(e.pointerId);if(!old)return;let dx=e.clientX-old.x,dy=e.clientY-old.y;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){let p=[...pointers.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);zoom=Math.max(.55,Math.min(2.5,zoom*d/(oldDist||d)));oldDist=d;}else if(mode==='walk'){walkYaw-=dx*.0019;walkPitch=Math.max(-.12,Math.min(.38,walkPitch+dy*.0010));}else if(mode==='satellite'){pan.x-=dx/cam.scale;pan.z-=dy/cam.scale;}else{yaw-=dx*.006;pitch=Math.max(.3,Math.min(1.35,pitch+dy*.004));}};canvas.onpointerup=canvas.onpointercancel=e=>{pointers.delete(e.pointerId);if(window.campusGame?.setFiring)window.campusGame.setFiring(false)};canvas.onwheel=e=>{e.preventDefault();zoom=Math.max(.55,Math.min(2.5,zoom*Math.exp(-e.deltaY*.001)));},{passive:false};canvas.addEventListener('wheel',e=>e.preventDefault(),{passive:false});
+const joy=$('joystick');function joyMove(e){let r=joy.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)/(r.width*.35),y=(e.clientY-r.top-r.height/2)/(r.height*.35),len=Math.max(1,Math.hypot(x,y));move={x:(x/len)*.48,y:(y/len)*.68};$('stick').style.transform=`translate(${move.x*27}px,${move.y*27}px)`;}let joyActive=false;joy.onpointerdown=e=>{joyActive=true;joy.setPointerCapture(e.pointerId);joyMove(e)};joy.onpointermove=e=>{if(joyActive)joyMove(e)};joy.onpointerup=joy.onpointercancel=()=>{joyActive=false;move={x:0,y:0};$('stick').style.transform=''};$('run').onpointerdown=e=>{running=true;$('run').setPointerCapture(e.pointerId)};$('run').onpointerup=$('run').onpointercancel=()=>running=false;document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('selected',x===b))});
 addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||document.querySelector('dialog[open]'))return;if(e.key==='/'){e.preventDefault();$('search').focus();return;}keys[e.key.toLowerCase()]=true;keys[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key.toLowerCase()==='f'&&!e.repeat&&mode==='walk'&&classNearStairs(player.x,player.z)){const down=!!e.shiftKey;player.floor=Math.max(0,Math.min(CLASS_LEVELS-1,(player.floor||0)+(down?-1:1)));velocity={x:0,z:0};const toast=$('toast');if(toast){toast.textContent='Đã lên TẦNG '+(player.floor+1)+' · Di chuyển qua hành lang để tham quan các phòng';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2300);}}});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;keys[e.key]=false});addEventListener('blur',()=>{keys={};move={x:0,y:0};running=false});
 function inside(x,z,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){let a=p[i],b=p[j];if(((a[1]>z)!==(b[1]>z))&&(x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0]))c=!c;}return c;}
 function clear(x,z){if(Math.abs(x)>155||Math.abs(z)>155)return false;return !buildings.some((b,i)=>i!==CLASS_BLOCK_ID&&i!==10&&b.renderPoly.length&&!b.colonnade&&inside(x,z,b.renderPoly))&&!insideClassBlock(x,z)}
@@ -111,13 +141,13 @@ let velocity={x:0,z:0},turnVelocity=0;
 function tick(now){let dt=Math.min((now-last)/1000,.05);last=now;if(mode==='walk'&&!document.querySelector('dialog[open]')&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){
  // Rotation is independent from translation: mouse is optional, WASD and arrows remain comfortable.
  const turn=Number(!!(keys.d||keys.ArrowRight))-Number(!!(keys.a||keys.ArrowLeft))+move.x;
- const turnTarget=turn*2.05;turnVelocity+=(turnTarget-turnVelocity)*(1-Math.exp(-11*dt));walkYaw-=turnVelocity*dt;
+ const turnTarget=turn*0.42;turnVelocity+=(turnTarget-turnVelocity)*(1-Math.exp(-5.8*dt));walkYaw-=turnVelocity*dt;
  const f=-move.y+Number(!!(keys.w||keys.ArrowUp))-Number(!!(keys.s||keys.ArrowDown));
  const strafe=Number(!!keys.c)-Number(!!keys.z),len=Math.max(1,Math.hypot(f,strafe));
- const speedNow=3.0*speed*(running||keys.Shift?1.58:1);
+ const speedNow=1.28*speed*(running||keys.Shift?1.12:1);
  const targetX=(-Math.sin(walkYaw)*f+Math.cos(walkYaw)*strafe)/len*speedNow;
  const targetZ=(-Math.cos(walkYaw)*f-Math.sin(walkYaw)*strafe)/len*speedNow;
- const response=1-Math.exp(-13*dt);velocity.x+=(targetX-velocity.x)*response;velocity.z+=(targetZ-velocity.z)*response;
+ const response=1-Math.exp(-(Math.abs(targetX)+Math.abs(targetZ)>.01?8.5:10.5)*dt);velocity.x+=(targetX-velocity.x)*response;velocity.z+=(targetZ-velocity.z)*response;
  const dx=velocity.x*dt,dz=velocity.z*dt;
  if(Math.hypot(dx,dz)>.0001){if(canWalkTo(player.x+dx,player.z))player.x+=dx;if(canWalkTo(player.x,player.z+dz))player.z+=dz;}
  }else{velocity.x=0;velocity.z=0;turnVelocity=0;}
@@ -132,8 +162,8 @@ window.campusBridge={
  position:()=>({x:player.x,z:player.z,y:(player.floor||0)*CLASS_STOREY,floor:player.floor||0,yaw:walkYaw}),setPosition:(x,z,yaw=walkYaw)=>{if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<190&&Math.abs(z)<190){player={x,z,floor:0};if(Number.isFinite(yaw))walkYaw=yaw;}},
  interior:()=>insideClassBlock(player.x,player.z),interiorNearStairs:()=>classNearStairs(player.x,player.z),floor:()=>player.floor||0,
  walk:()=>setMode('walk'),aerial:()=>setMode('aerial'),gate:()=>{player={x:spawn[0],z:spawn[1],floor:0};walkYaw=-1.15;walkPitch=.08;setMode('walk')},
- roomSpawn:(players,self)=>{const peers=(players||[]).filter(p=>p&&p.id!==self&&Number.isFinite(p.x)&&Number.isFinite(p.z));let hash=0;for(const ch of String(self||'ute'))hash=(hash*31+ch.charCodeAt(0))>>>0;for(let n=0;n<48;n++){const slot=(hash+n)%48,ring=Math.floor(slot/8),a=(slot%8)*Math.PI/4,r=5.2+ring*2.6,x=spawn[0]+Math.cos(a)*r,z=spawn[1]+Math.sin(a)*r;if(!clearPlayer(x,z))continue;if(peers.some(q=>Math.hypot(q.x-x,q.z-z)<2.0))continue;player={x,z,floor:0};walkYaw=Math.atan2(x-spawn[0],z-spawn[1]);setMode('walk');return true;}player={x:spawn[0]+Math.cos(hash)*8,z:spawn[1]+Math.sin(hash)*8,floor:0};walkYaw=-1.15;setMode('walk');return true;},
- peers:ps=>{remotePlayers=ps.slice(0,40).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)&&Number.isFinite(p.yaw)&&Math.abs(p.x)<=190&&Math.abs(p.z)<=190&&/^#[0-9a-f]{6}$/i.test(p.color)).map(p=>({...p,name:String(p.name).slice(0,24)}))},getPeers:()=>remotePlayers,
+ roomSpawn:(players,self,tabKey)=>{const peers=(players||[]).filter(p=>p&&p.id!==self&&Number.isFinite(p.x)&&Number.isFinite(p.z));let hash=0;for(const ch of String(tabKey||self||'ute'))hash=(hash*31+ch.charCodeAt(0))>>>0;for(let n=0;n<32;n++){const slot=(hash+n)%32,ring=Math.floor(slot/8),a=(slot%8)*Math.PI/4,r=2.25+ring*.72,x=spawn[0]+Math.cos(a)*r,z=spawn[1]+Math.sin(a)*r;if(!clearPlayer(x,z))continue;if(peers.some(q=>Math.hypot(q.x-x,q.z-z)<1.15))continue;player={x,z,floor:0};walkYaw=Math.atan2(spawn[0]-x,spawn[1]-z);setMode('walk');return true;}player={x:spawn[0]+Math.cos(hash)*2.6,z:spawn[1]+Math.sin(hash)*2.6,floor:0};walkYaw=Math.atan2(spawn[0]-player.x,spawn[1]-player.z);setMode('walk');return true;},
+ peers:ps=>{remotePlayers=ps.slice(0,40).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)&&Number.isFinite(p.yaw)&&Math.abs(p.x)<=190&&Math.abs(p.z)<=190&&/^#[0-9a-f]{6}$/i.test(p.color)).map(p=>({...p,name:String(p.name).slice(0,24)}))},getPeers:()=>remotePlayers,peerList:()=>remotePlayers,
  selected:()=>selected>=0?{id:selected,name:buildings[selected].name}:null,
  places:()=>buildings.map((b,id)=>({id,name:b.name,x:b.visit[0],z:b.visit[1]})),
  mode:()=>mode,photo:()=>canvas.toDataURL('image/png'),select

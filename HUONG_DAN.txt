@@ -1,7 +1,7 @@
-UTE CAMPUS – BẢN 15 · KHỐI PHÒNG HỌC / XƯỞNG / NHÀ XE / SÂN BÓNG / HIỆU NĂNG
+UTE CAMPUS – BẢN 16.2 · PHÒNG CHUNG / KHU A / XƯỞNG / SÂN BÓNG / HIỆU NĂNG
 ===========================================================
 
-Bản 15 giữ avatar hoạt hình thấp gọn theo ảnh mẫu, làm tay đánh ngược nhịp chân, chuẩn hóa sân bóng thành hình chữ nhật thống nhất trong 2D, 3D và vật lý. Quả bóng được thu về tỷ lệ thật hơn, bề mặt gồm 12 panel ngũ giác đen và 20 panel lục giác trắng có đường ghép.
+Bản 16.2 hợp nhất một phòng Realtime cho toàn khuôn viên; sửa API danh sách người chơi; yêu cầu Realtime kết nối trước khi mở chế độ chơi nhiều người; giảm tốc độ điều khiển; tăng bóng lên đường kính 36 cm; phân tầng Khu A thành sảnh tầng 1, lớp học tầng 2, khu tự học tầng 3; gỡ nhà xe chưa xác định vị trí.
 
 1) CẬP NHẬT MÃ NGUỒN
 - Giải nén ZIP.
@@ -23,6 +23,7 @@ Bản 15 giữ avatar hoạt hình thấp gọn theo ảnh mẫu, làm tay đán
 3) PHÒNG CHUNG VÀ DANH SÁCH NGƯỜI ONLINE
 - Mỗi người mở cùng đường dẫn website.
 - Chọn “Vào phòng chung”, nhập biệt danh và nhấn “Vào phòng chung”.
+- Chỉ bắt đầu tìm trận bóng hoặc bật đấu súng sau khi trạng thái hiện “Đã vào Realtime · Phòng UTE chung”. Nếu chưa vào Realtime, game sẽ mở hộp thoại phòng chung thay vì chạy một trận riêng với BOT.
 - Bản mới dùng Supabase Realtime Presence để xác định số trình duyệt đang online,
   Broadcast để đồng bộ vị trí, hướng, trạng thái di chuyển, vũ khí và trạng thái tìm trận.
 - Trong chế độ đi dạo luôn có bộ đếm người online ở góc trên phải; khi mở trận, số online
@@ -81,20 +82,21 @@ Máy tính:
   Nút ◉                   : Đổi góc nhìn thứ nhất / thứ ba
 
 Điện thoại:
-  Joystick bên trái       : Di chuyển
+  Joystick bên trái       : Kéo lên/xuống để tiến/lùi; trái/phải để xoay hướng (độ nhạy đã giảm)
   Giữ nút Chạy            : Chạy nhanh
   Nút 🔫                  : Bắn
   Nút ↻                   : Nạp đạn
   Nút Lượm                : Nhặt súng
   Nút ◉                   : Đổi góc nhìn
 
-8) THAM QUAN KHỐI PHÒNG HỌC, XƯỞNG VÀ NHÀ XE
-- Chọn địa điểm Khối mái xanh phía Tây (Khối 03), bấm Đi đến để tới cửa chính.
-- Khối 03 có hành lang giữa và 8 phòng mô phỏng mỗi tầng (4 phòng mỗi bên), tổng cộng 24 phòng trên 3 tầng; có bàn, ghế, bảng, cửa lớp và cửa sổ.
-- Đi vào bằng cửa đầu hồi, di chuyển dọc hành lang; các bàn ghế có vùng va chạm cơ bản để tránh đi xuyên qua đồ đạc.
-- Đến cầu thang cuối hành lang, nhấn F để lên tầng và Shift+F để xuống. Đây là cách chuyển tầng mô phỏng; chưa phải mô phỏng bước chân leo cầu thang từng bậc.
-- Xưởng thực hành được dựng theo ảnh tham khảo thành khung thép, mái tôn xanh, các khoang mở và bàn máy thực hành. Nhà xe mái che đặt phía sau xưởng, có vạch đỗ và xe máy low-poly.
-- Chỉ Khối 03 hiện có nội thất tham quan hoàn chỉnh; các khối khác vẫn là mô hình khối bên ngoài. Sơ đồ phòng, cầu thang, máy móc và nhà xe là bố trí minh họa vì chưa có bản vẽ mặt bằng nội thất chính thức.
+8) THAM QUAN KHU A VÀ XƯỞNG THỰC HÀNH
+- Chọn địa điểm Khu A (khối số 04 trên bản đồ), bấm Đi đến để tới lối vào.
+- Tầng 1 là sảnh sinh viên mở với khu ghế ngồi, quầy tiếp đón và lối đi trung tâm; không dựng thành phòng học.
+- Tầng 2 là tầng phòng học mô phỏng: hành lang giữa, 8 phòng (4 phòng mỗi bên), bàn ghế, bảng, cửa và cửa sổ.
+- Tầng 3 là không gian tự học/làm việc nhóm, có bàn dự án và kệ sách; không lặp lại bố cục lớp học.
+- Đi vào qua cửa đầu hồi, di chuyển dọc hành lang. Tại cầu thang cuối hành lang nhấn F để lên tầng, Shift+F để xuống. Chuyển tầng là tương tác mô phỏng, không phải vật lý leo từng bậc.
+- Xưởng thực hành được dựng theo ảnh tham khảo thành khung thép, mái công nghiệp răng cưa, hiên và bàn máy. Nhà xe dựng sai vị trí trước đó đã được tạm gỡ khỏi mô hình.
+- Nội thất Khu A là mô hình tham quan minh họa vì chưa có bản vẽ kiến trúc/bố trí phòng chính thức; các khối khác vẫn chủ yếu là ngoại thất 3D.
 
 9) HÌNH ẢNH 3D
 - Bổ sung vật liệu bề mặt có vân nhẹ cho cỏ, nền bê tông, tường và mái.
@@ -156,9 +158,43 @@ V13 – chỉnh theo ảnh người dùng:
 
 
 V15 – bổ sung theo ảnh sân và ảnh xưởng thực hành:
-- Bóng đá là khối cầu đường kính khoảng 24 cm; phần vỏ mô phỏng đúng bố cục quả bóng đá 32 panel (12 ngũ giác đen + 20 lục giác trắng) với đường viền panel. Kích thước bóng, điểm bật biên và mặt phẳng ghi bàn dùng cùng bán kính.
+- Bóng đá là khối cầu đường kính khoảng 30 cm; phần vỏ mô phỏng đúng bố cục quả bóng đá 32 panel (12 ngũ giác đen + 20 lục giác trắng) với đường viền panel. Kích thước bóng, điểm bật biên và mặt phẳng ghi bàn dùng cùng bán kính.
 - Tay đánh ngược nhịp chân; khuỷu gập theo pha bước để dáng đi bớt cứng. Chuyển động avatar ở xa cũng áp dụng nhịp tay/chân đối nghịch và nội suy mượt.
-- Xưởng thực hành được mô phỏng lại theo ảnh tham khảo: khối thấp dài, mặt tiền có nhịp cột/ô cửa lặp lại, mái công nghiệp dạng răng cưa nhiều nhịp, mái hiên hành lang và bàn máy thực hành; nhà xe có mái che đặt phía sau xưởng.
-- Phòng học nội thất hiện được làm mẫu đầy đủ ở Khối 03: 3 tầng, hành lang giữa, 8 phòng/tầng, cửa, bảng, cửa sổ, bàn ghế và cầu thang mô phỏng. Đến khu cầu thang, nhấn F để lên tầng và Shift+F để xuống tầng. Chưa có bản vẽ mặt bằng chính thức nên không khẳng định đây là bố trí thực tế của mọi dãy nhà; các khối khác vẫn dùng mặt ngoài 3D.
+- Xưởng thực hành được mô phỏng lại theo ảnh tham khảo: khối thấp dài, mặt tiền có nhịp cột/ô cửa lặp lại, mái công nghiệp dạng răng cưa nhiều nhịp, mái hiên hành lang và bàn máy thực hành; nhà xe dựng sai vị trí đã được tạm ẩn khỏi cảnh.
+- Nội thất hiện được làm mẫu ở Khu A: tầng 1 là sảnh sinh viên; tầng 2 có 8 phòng học; tầng 3 là khu tự học; có hành lang và cầu thang mô phỏng. Đến khu cầu thang, nhấn F để lên tầng và Shift+F để xuống tầng. Chưa có bản vẽ mặt bằng chính thức nên không khẳng định đây là bố trí thực tế của mọi dãy nhà; các khối khác vẫn dùng mặt ngoài 3D.
 - Sân và hai khung thành sử dụng cùng trục hình chữ nhật ở bản đồ, 3D và vật lý; bot và điểm giao bóng lấy cùng tọa độ sân.
 - Đã kiểm tra cú pháp JavaScript, ID HTML và cấu trúc gói. Chưa chạy kiểm thử đồ họa trực tiếp trên Vercel hoặc tải thực tế nhiều máy.
+
+
+--- V16: PHÒNG CHUNG, KHU A VÀ ĐIỀU KHIỂN ---
+- Tất cả khách vào cùng một topic Realtime: ute-campus-main-campus-v2. Không tách topic theo tab hoặc theo chế độ chơi. Kênh được khai báo public (`private:false`) để mọi người cầm publishable key cùng vào được; Dashboard Supabase cần bật “Enable Realtime service” và “Allow public access to channels”.
+- Mỗi tab có Presence client_id riêng để không ghi đè khi cùng một tài khoản mở nhiều tab.
+- Realtime Presence hiển thị thành viên online; Broadcast truyền vị trí và sự kiện chơi. RPC campus_sync giữ vai trò xác thực hồ sơ/chat và dữ liệu dự phòng.
+- Khu A: tầng 1 là sảnh sinh viên mở; tầng 2 mới là các phòng học; tầng 3 là khu tự học/làm việc nhóm. Đi tới cầu thang cuối hành lang, nhấn F lên tầng, Shift+F xuống tầng.
+- Nhà xe dựng sai vị trí đã được gỡ khỏi mô hình xưởng cho đến khi có vị trí xác nhận.
+- Tốc độ đi bộ, chạy, xoay và joystick được giảm; quả bóng tăng bán kính từ 0,12m lên 0,18m.
+- Sau deploy, hai người đều cần mở website, nhập biệt danh và nhấn Vào server/Vào phòng chung. Chờ trạng thái Realtime đã kết nối và bộ đếm online tăng rồi mới vào đấu trường.
+
+
+V16 - THÔNG TIN CẬP NHẬT
+- Một topic Realtime duy nhất: ute-campus-main-campus-v2 cho toàn khuôn viên; không tạo phòng riêng theo cổng, sân bóng hoặc đấu súng.
+- Mỗi tab có client_id riêng trong Presence. Broadcast vị trí và trạng thái sử dụng cùng topic.
+- Nếu trạng thái hiện “Đã xác thực · đang mở kênh Realtime…” mà không chuyển thành “Đã vào Realtime”, nghĩa là RPC xác thực đã chạy nhưng WebSocket Realtime chưa vào kênh; kiểm tra Realtime/Broadcast trong Supabase và kết nối mạng.
+- Khu A (khối số 04 trên bản đồ): tầng 1 là sảnh sinh viên mở, tầng 2 có phòng học mô phỏng, tầng 3 là không gian tự học/làm việc nhóm. Tại cầu thang cuối hành lang nhấn F để lên, Shift+F để xuống.
+- Nhà xe dựng sai vị trí ở phiên bản trước đã được gỡ khỏi cảnh.
+- Điều khiển đã giảm tốc độ đi bộ/xoay và giảm độ nhạy joystick; bóng có bán kính 0,15 m (đường kính 36 cm).
+
+
+V16.1 – HIỆU CHỈNH THEO LẦN THỬ VERCEL GẦN NHẤT:
+- Tất cả chế độ dùng cùng topic `ute-campus-main-campus-v2`; ID Presence riêng theo từng tab để phân biệt cả hai tab dùng chung phiên Auth.
+- Sửa API peerList để bộ dựng cảnh và ghép trận đọc đúng danh sách người chơi; giữ roster RPC làm phương án dự phòng khi Realtime đang kết nối.
+- Nếu RPC trả `TOO_FAST` do hai tab chia sẻ một phiên, client tự đợi và thử lại, không loại người chơi ngay.
+- Tọa độ vào cổng dùng client ID riêng của tab để tránh hai tab cùng auth UID bị đặt chồng một điểm.
+- Xoay A/D và joystick ngang giảm độ nhạy; tốc độ đi bộ/chạy được hạ thêm. Bóng tăng bán kính lên 0,18 m (đường kính 36 cm) ở cả mô hình 3D và luật vật lý.
+- Khối A: tầng 1 là sảnh ngồi học chung, tầng 2 là phòng học, tầng 3 là khu tự học; có hành lang và cầu thang mô phỏng. Nhà xe chưa xác nhận vị trí được bỏ khỏi cảnh.
+- Chưa thể xác nhận Realtime hoạt động trên mọi deploy từ mã nguồn; sau khi deploy kiểm tra badge phải hiện `Đã vào Realtime · Phòng UTE chung`. Nếu chỉ hiện `Đã xác thực · đang mở kênh Realtime…`, kiểm tra `Database → Realtime → Settings`: bật `Enable Realtime service` và `Allow public access to channels`; Supabase ghi rõ kênh Broadcast cần cùng topic chính xác và Realtime cần được bật để nhận thông điệp.
+
+V16.2 – CHẶN CHẾ ĐỘ NHIỀU NGƯỜI CHƠI GIẢ LẬP RIÊNG:
+- Nút Tìm trận bóng và Đấu súng yêu cầu kênh Realtime đang SUBSCRIBED. Nếu kênh rớt giữa trận, máy khách ngừng tự nhận quyền host để tránh mỗi người tiếp tục một trận riêng. Nếu chưa kết nối, giao diện mở hộp thoại Vào phòng chung và không tự tạo một trận BOT riêng trên mỗi máy.
+- Sau khi cả hai người đã vào cùng topic và trạng thái Realtime thành công, mỗi người mới có thể tham gia cùng một trận. Host được chọn xác định theo ID nhỏ nhất trong danh sách người đang xếp trận, hạn chế hai người cùng khởi tạo đồng thời rồi mỗi người thành host riêng. Một người online vẫn có thể đấu BOT trong phòng chung.
+- Tăng bóng lên đường kính 36 cm; tốc độ đi bộ cơ bản 1,28 m/s, tăng tốc 1,12 lần; giảm độ nhạy quay A/D và joystick.
